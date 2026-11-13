@@ -12,6 +12,7 @@ import { ActivityRow, Button, Category, ChartFrame, Icon, MetricTile, Num, Permi
 import { RESOURCES } from "@/lib/design-resources";
 import { GridLadderExplainer } from "@/components/explainers/GridLadderExplainer";
 import { TradeExplainer } from "@/components/explainers/TradeExplainer";
+import { MemeExplainer } from "@/components/explainers/MemeExplainer";
 import { RangeExplainer } from "@/components/explainers/RangeExplainer";
 import { CompoundExplainer } from "@/components/explainers/CompoundExplainer";
 import { LendingExplainer } from "@/components/explainers/LendingExplainer";
@@ -40,15 +41,16 @@ function Panel({ title, action, children, pad = true }) {
   );
 }
 
-function AgentDetailScreen({ agent, go, onHire }) {
+function AgentDetailScreen({ agent, go }) {
   const cat = Category(agent.categoryId);
   const isAegisLP = agent.id === "aegis-lp";
+  const isPaperTrade = agent.id === "ai-token-trader";
   const [range, setRange] = React.useState("30d");
   const metrics = agent.metrics || [
-    { label: cat.metricLabel, value: agent.metricValue, tone: agent.metricTone === "flat" ? "flat" : "profit", note: "on-chain" },
+    { label: isPaperTrade ? "Paper P&L" : cat.metricLabel, value: agent.metricValue, tone: agent.metricTone === "flat" ? "flat" : "profit", note: isPaperTrade ? "paper only" : "on-chain" },
     { label: "Users hiring", value: String(agent.hiredCount), note: "right now" },
     { label: "Fee", value: agent.price, note: agent.priceUnit },
-    { label: "Protocol", value: agent.protocol, note: "BNB Chain" },
+    { label: "Protocol", value: agent.protocol, note: "NEAR" },
   ];
   return (
     <div className="fl-shell fl-agent-detail-page">
@@ -73,8 +75,8 @@ function AgentDetailScreen({ agent, go, onHire }) {
           </div>
         </div>
         <div className="fl-detail-cta" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-          <Button variant="primary" size="lg" onClick={() => go(`/deploy/${agentDeployKind(agent)}`)} disabled={agent.disabled}>{agent.disabled ? "At capacity" : "Hire Now"}</Button>
-          <span style={{ font: "var(--weight-regular) var(--text-sm)/1 var(--font-sans)", color: "var(--text-subtle)" }}>Takes 3 steps. You can revoke anytime.</span>
+          <Button variant="primary" size="lg" onClick={() => go(`/deploy/${agentDeployKind(agent)}`)} disabled={agent.disabled}>{agent.disabled ? "Coming soon" : "Hire Now"}</Button>
+          <span style={{ font: "var(--weight-regular) var(--text-sm)/1 var(--font-sans)", color: "var(--text-subtle)" }}>{isPaperTrade ? "Paper only. No deposit or agent wallet." : "Takes 3 steps. You can revoke anytime."}</span>
         </div>
       </div>
 
@@ -84,15 +86,15 @@ function AgentDetailScreen({ agent, go, onHire }) {
 
       <div className="fl-detail-grid" style={{ display: "grid", gridTemplateColumns: "minmax(0,1.55fr) minmax(0,1fr)", gap: 16, marginTop: 16, alignItems: "start" }}>
         <div className="fl-detail-main" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {agent.categoryId === "grid"
-            ? <GridLadderExplainer pair={agent.pair || "BNB / USDT"} protocol={agent.protocol} budget={agent.dailyCap || "500 USDT"} />
-            : agent.explainer === "compound" ? <CompoundExplainer pair={agent.pair || "BNB / USDT"} protocol={agent.protocol} />
+          {isPaperTrade ? <MemeExplainer protocol={agent.protocol} /> : agent.categoryId === "grid"
+            ? <GridLadderExplainer pair={agent.pair || "USDC / wNEAR"} protocol={agent.protocol} budget={agent.dailyCap || "500 USDT"} />
+            : agent.explainer === "compound" ? <CompoundExplainer pair={agent.pair || "USDC / wNEAR"} protocol={agent.protocol} />
             : agent.explainer === "smart" ? <SmartExplainer protocol={agent.protocol} />
             : agent.explainer === "dca" ? <DcaExplainer protocol={agent.protocol} />
             : agent.explainer === "schedule" ? <ScheduleExplainer protocol={agent.protocol} />
-            : agent.explainer === "trade" ? <TradeExplainer pair={agent.pair || "BNB / USDT"} protocol={agent.protocol} />
+            : agent.explainer === "trade" ? <TradeExplainer pair={agent.pair || "USDC / wNEAR"} protocol={agent.protocol} />
             : agent.explainer === "lending" ? <LendingExplainer protocol={agent.protocol} />
-            : agent.categoryId === "lp" ? <RangeExplainer pair={agent.pair || "BNB / USDT"} protocol={agent.protocol} />
+            : agent.categoryId === "lp" ? <RangeExplainer pair={agent.pair || "USDC / wNEAR"} protocol={agent.protocol} />
             : <>
           <ChartFrame title="Cumulative PnL" value={agent.metricValue} valueTone="profit" height={180}
             right={<SegmentedToggle value={range} onChange={setRange} options={["7d", "30d", "90d"]} />}
@@ -100,9 +102,9 @@ function AgentDetailScreen({ agent, go, onHire }) {
             axis={["12 Jun", "27 Jun", "Today"]} />
 
           <Panel title="On-chain activity" pad={false}
-            action={<a href="https://bscscan.com" target="_blank" rel="noreferrer" style={{ font: "var(--type-mono-xs)", display: "flex", gap: 5, alignItems: "center" }}>BscScan<Icon name="external" size={12} /></a>}>
+            action={<a href="https://nearblocks.io" target="_blank" rel="noreferrer" style={{ font: "var(--type-mono-xs)", display: "flex", gap: 5, alignItems: "center" }}>NearBlocks<Icon name="external" size={12} /></a>}>
             <div>
-              {(agent.activity || []).map((r, i) => <ActivityRow key={i} {...r} href="https://bscscan.com" />)}
+              {(agent.activity || []).map((r, i) => <ActivityRow key={i} {...r} href="https://nearblocks.io" />)}
               {!agent.activity && <div style={{ padding: 20, font: "var(--type-body-md)", color: "var(--text-subtle)" }}>No public activity in the last 24 hours.</div>}
             </div>
           </Panel>
@@ -111,53 +113,59 @@ function AgentDetailScreen({ agent, go, onHire }) {
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <Panel title="What this agent is allowed to do">
-            {agent.explainer === "lending" ? (
+            {isPaperTrade ? (
               <>
-                <PermissionItem>Watch the health factor on your {agent.protocol} account — no other protocol, no other wallet.</PermissionItem>
+                <PermissionItem>Join screened meme.cooking auctions on paper after an AI gate.</PermissionItem>
+                <PermissionItem>Track paper positions and exits within your settings.</PermissionItem>
+                <PermissionItem kind="deny">Place real orders or create an agent wallet.</PermissionItem>
+              </>
+            ) : agent.explainer === "lending" ? (
+              <>
+                <PermissionItem>Watch the health factor on your {agent.protocol} account, no other protocol, no other wallet.</PermissionItem>
                 <PermissionItem>Repay your largest debt market first when your health factor crosses your trigger line.</PermissionItem>
-                <PermissionItem>Use only the wallet balance held for this — never a new borrow, never your other assets.</PermissionItem>
+                <PermissionItem>Use only the wallet balance held for this, never a new borrow, never your other assets.</PermissionItem>
                 <PermissionItem>Re-read the health factor on-chain after repaying, and stop once it clears your target.</PermissionItem>
                 <PermissionItem>Log every repay, with the transaction and the before/after health factor.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Supply new collateral or open new borrows on its own.</PermissionItem>
               </>
             ) : agent.explainer === "trade" ? (
               <>
-                <PermissionItem>Trade only tokenized US stocks, with USDT.</PermissionItem>
+                <PermissionItem>Trade only tokens on the Rhea token list, paired with USDC.</PermissionItem>
                 <PermissionItem>Size entries within your capital and max open positions.</PermissionItem>
-                <PermissionItem>Swap via Binance first, a direct pool as fallback.</PermissionItem>
+                <PermissionItem>Swap on Rhea.</PermissionItem>
                 <PermissionItem>Exit at your take profit, stop loss or max hold time.</PermissionItem>
                 <PermissionItem>Let the LLM decide any exit you leave blank.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Spend past the capital you set, or raise its own limits.</PermissionItem>
               </>
             ) : agent.explainer === "schedule" ? (
               <>
-                <PermissionItem>Buy one tokenized stock with USDT on your schedule.</PermissionItem>
+                <PermissionItem>Buy one token with USDC on your schedule.</PermissionItem>
                 <PermissionItem>Spend the same amount on every buy.</PermissionItem>
-                <PermissionItem>Swap via Binance first, a direct pool as fallback.</PermissionItem>
+                <PermissionItem>Swap on Rhea.</PermissionItem>
                 <PermissionItem>Hold what it buys; it never sells on its own.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Spend past the total budget you set.</PermissionItem>
               </>
             ) : agent.explainer === "dca" ? (
               <>
-                <PermissionItem>Open each round with a base buy of one stock.</PermissionItem>
+                <PermissionItem>Open each round with a base buy of one token.</PermissionItem>
                 <PermissionItem>Buy more at each price-drop step, up to your max.</PermissionItem>
                 <PermissionItem>Sell the round at your take profit over average cost.</PermissionItem>
                 <PermissionItem>Start a new round after each take profit.</PermissionItem>
                 <PermissionItem>On stop loss, stop the agent without selling.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Spend past the capital you set.</PermissionItem>
               </>
             ) : agent.explainer === "smart" ? (
               <>
-                <PermissionItem>Hold 2 to 5 tokenized stocks at your target weights.</PermissionItem>
+                <PermissionItem>Hold 2 to 5 tokens at your target weights.</PermissionItem>
                 <PermissionItem>Check the basket at your interval (4h to daily).</PermissionItem>
-                <PermissionItem>Rebalance only when a stock drifts past your threshold.</PermissionItem>
-                <PermissionItem>Swap via Binance first, a direct pool as fallback.</PermissionItem>
-                <PermissionItem>Keep the stocks when you stop it; no sell-off.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
+                <PermissionItem>Rebalance only when a token drifts past your threshold.</PermissionItem>
+                <PermissionItem>Swap on Rhea.</PermissionItem>
+                <PermissionItem>Keep the tokens when you stop it; no sell-off.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Invest more than the total capital you set.</PermissionItem>
               </>
             ) : agent.explainer === "compound" ? (
@@ -167,7 +175,7 @@ function AgentDetailScreen({ agent, go, onHire }) {
                 <PermissionItem>Swap the part of those fees needed to match the pool ratio.</PermissionItem>
                 <PermissionItem>Add the fees back into the same position.</PermissionItem>
                 <PermissionItem>Wait until unclaimed fees are worth more than gas to compound.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Move your range, or add capital beyond what you delegate.</PermissionItem>
               </>
             ) : agent.categoryId === "lp" ? (
@@ -177,44 +185,34 @@ function AgentDetailScreen({ agent, go, onHire }) {
                 <PermissionItem>Collect the fees earns and put them back in your positions.</PermissionItem>
                 <PermissionItem>Swap between the two tokens only as much as re-ranging needs.</PermissionItem>
                 <PermissionItem>Wait out your drift trigger and cooldown before it moves anything.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Add liquidity beyond what you delegate.</PermissionItem>
               </>
             ) : (
               <>
-                <PermissionItem>Minimum delegate capital is 0.0456 $BNB.</PermissionItem>
-                <PermissionItem>Choose any pair on Panckeswap v3 with $WBNB leg.</PermissionItem>
-                <PermissionItem>Place, settle and refill grid levels inside the price range you set.</PermissionItem>
-                <PermissionItem>Profit from Volatility. Capitalizes on small price fluctuations.</PermissionItem>
-                <PermissionItem>Close everything and stop at your take-profit or stop-loss.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any wallet but yours.</PermissionItem>
-                <PermissionItem kind="deny">Touch anything outside the capital you delegate.</PermissionItem>
+                <PermissionItem>Deposit 1 to 2 NEAR. The agent swaps what it needs into USDC itself.</PermissionItem>
+                <PermissionItem>Trade only USDC / wNEAR on Rhea DCL, with at most four open limit orders.</PermissionItem>
+                <PermissionItem>After a full fill, place the reverse order one step away.</PermissionItem>
+                <PermissionItem>Spend at most 0.25 NEAR per transaction and 3 times your deposit per day, as your wallet policy sets.</PermissionItem>
+                <PermissionItem>Pay out only to your own NEAR account when you stop it.</PermissionItem>
+                <PermissionItem kind="deny">Send NEAR to any account but yours or the Rhea contracts.</PermissionItem>
+                <PermissionItem kind="deny">Change its own limits. Only you can update or freeze the policy.</PermissionItem>
               </>
             )}
-            <PermissionItem kind="info" note={(agent.custody || []).includes("agentic-wallet") ? "Altana: on-chain revoke. Agentic Wallet: sign out in Binance." : "Takes effect immediately, on-chain."}>You can revoke this at any time.</PermissionItem>
+            {isPaperTrade ? <PermissionItem kind="info">Only the owner can stop the paper agent.</PermissionItem> : <PermissionItem kind="info" note="Owner-only, on-chain.">You can freeze the agent wallet at any time.</PermissionItem>}
           </Panel>
 
           <Panel title="Pricing">
             <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
               <span style={{ font: "var(--weight-semibold) var(--text-3xl)/1 var(--font-mono)" }}>0%</span>
-              <span style={{ font: "var(--type-body)", color: "var(--text-muted)" }}>performance fee</span>
+              <span style={{ font: "var(--type-body)", color: "var(--text-muted)" }}>{isPaperTrade ? "paper agent fee" : "performance fee"}</span>
             </div>
             <div style={{ marginTop: 14 }}>
-              <PermissionItem kind="info">Zero fees this month, include LLM model usage.</PermissionItem>
-              <PermissionItem kind="info">Gas is funded separately; optional data requests use the agent wallet's finite USDT budget.</PermissionItem>
+              <PermissionItem kind="info">No fees during the beta.</PermissionItem>
+              <PermissionItem kind="info">{isPaperTrade ? "No deposit, agent wallet or real orders." : "Network gas is paid from the NEAR in the agent wallet."}</PermissionItem>
             </div>
           </Panel>
 
-          <Panel title="On-chain identity">
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
-              <img src={RESOURCES.erc8004} alt="ERC-8004" style={{ width: 48, height: 48 }} />
-              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                <span style={{ font: "var(--type-body)", color: "var(--text-subtle)" }}>Standard</span>
-                <span className="fl-num fl-num--flat" style={{ color: "var(--ink-1)", font: "var(--type-body)" }}>ERC-8004</span>
-              </div>
-            </div>
-            <Button variant="secondary" size="sm" block iconRight={<Icon name="external" size={13} />}>View registry record</Button>
-          </Panel>
         </div>
       </div>
     </div>

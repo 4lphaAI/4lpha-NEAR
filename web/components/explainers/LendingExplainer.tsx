@@ -11,11 +11,11 @@ import React from "react";
 const SCENES = [{
   t: 0,
   title: "It watches your health factor, not your positions",
-  body: "Health factor is collateral vs. debt on Venus. Above 1.0 you're safe; at 1.0 you're liquidated."
+  body: "Health factor is collateral vs. debt on Rhea Lend. Above 1.0 you're safe; at 1.0 you're liquidated."
 }, {
   t: 1600,
   title: "The market moves, your factor drifts down",
-  body: "No action yet — a dip alone isn't the trigger."
+  body: "No action yet: a dip alone isn't the trigger."
 }, {
   t: 3300,
   title: "It crosses your trigger line",
@@ -27,7 +27,7 @@ const SCENES = [{
 }, {
   t: 6400,
   title: "It re-reads the real result on-chain",
-  body: "Not an estimate — the actual health factor after the repay lands, confirmed before it stops."
+  body: "Not an estimate: the actual health factor after the repay lands, confirmed before it stops."
 }, {
   t: 8200,
   title: "Back above your target, then it waits again",
@@ -60,7 +60,7 @@ const N = 170;
 const LOSS = "var(--loss)",
   LP = "var(--cat-lp)";
 function LendingExplainer({
-  protocol = "Venus"
+  protocol = "Rhea Lend"
 }) {
   const [e, setE] = React.useState(0);
   const [playing, setPlaying] = React.useState(true);
@@ -118,7 +118,7 @@ function LendingExplainer({
   }, {
     t: REPAY_AT + 300,
     tone: "lp",
-    text: "Repaid 42 USDT of vUSDT debt",
+    text: "Repaid 42 USDC of debt",
     sub: "largest debt market \u00b7 wallet balance only"
   }, {
     t: CONFIRM_AT + 300,

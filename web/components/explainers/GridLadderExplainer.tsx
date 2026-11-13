@@ -1,8 +1,8 @@
 "use client";
 /* The grid explainer, rebuilt from the marketing film's version of the same
    animation (`marketing-video-v2/src/scenes/Grid.tsx`): the price walks the
-   WHOLE ladder — down through the three buys at $608 / $600 / $592, then back
-   up through the three sells at $616 / $624 / $632 — instead of showing one
+   WHOLE ladder - down through the three buys at $2.432 / $2.400 / $2.368, then back
+   up through the three sells at $2.464 / $2.496 / $2.528 - instead of showing one
    round trip. Every fill leaves a marker on the tape, each buy arms the sell
    one level above it, and the footer counts the round trips that close.
 
@@ -43,31 +43,31 @@ const SCENES = [
   {
     t: T.sides,
     title: "Buys sit below, sells sit above",
-    body: "Each level is a narrow resting position on PancakeSwap v3 — USDT waiting to buy below the price, BNB waiting to sell above it.",
+    body: "Each level is a resting limit order on Rhea DCL: USDC waiting to buy below the price, wNEAR waiting to sell above it.",
   },
   {
     t: T.buy1,
     title: "The price falls into the first buy",
-    body: "BNB trades down to $608. That level converts your USDT into BNB and the agent settles it on-chain.",
+    body: "NEAR trades down to $2.432. That order converts your USDC into wNEAR and the agent claims it on-chain.",
   },
   {
     t: T.buy2,
-    title: "It keeps falling — $600 and $592 fill too",
+    title: "It keeps falling - $2.400 and $2.368 fill too",
     body: "Each level is bought on its own, and the three of them together never spend more than the budget you delegated.",
   },
   {
     t: T.turn,
     title: "Every fill arms a sell one level up",
-    body: "$616, $624 and $632 are now armed against the three levels you own. The ladder is always two-sided.",
+    body: "$2.464, $2.496 and $2.528 are now armed against the three levels you own. The ladder is always two-sided.",
   },
   {
     t: T.sell1,
-    title: "The price turns and $616 fills",
+    title: "The price turns and $2.464 fills",
     body: "The first round trip closes. The spread, minus swap fees and gas, is realized profit.",
   },
   {
     t: T.sell2,
-    title: "$624 and $632 fill on the way up",
+    title: "$2.496 and $2.528 fill on the way up",
     body: "Three round trips out of one swing. A price that keeps moving sideways is what the agent feeds on.",
   },
   {
@@ -86,6 +86,8 @@ const LEVELS: Array<{ p: number; side: Side }> = [
   { p: 592, side: "buy" },
 ];
 const MID = 612;
+/** Chart units to USD per NEAR: level 608 is $2.432, one 8-unit step is $0.032. */
+const USD = (p: number): string => `$${(p * 0.004).toFixed(3)}`;
 
 /** When each rung fills, and when a sell arms behind its matching buy. */
 const FILLED_AT: Record<number, number> = {
@@ -103,12 +105,12 @@ const ARMED_AT: Record<number, number> = {
 };
 
 const FILLS: Array<{ at: number; p: number; side: Side; text: string; sub: string }> = [
-  { at: T.buy1, p: 608, side: "buy", text: "Bought 0.42 BNB at $608.00", sub: "level 3 · fee $0.18" },
-  { at: T.buy2, p: 600, side: "buy", text: "Bought 0.42 BNB at $600.00", sub: "level 2 · fee $0.18" },
-  { at: T.buy3, p: 592, side: "buy", text: "Bought 0.43 BNB at $592.00", sub: "level 1 · fee $0.18" },
-  { at: T.sell1, p: 616, side: "sell", text: "Sold 0.42 BNB at $616.00", sub: "round trip · +$5.82" },
-  { at: T.sell2, p: 624, side: "sell", text: "Sold 0.42 BNB at $624.00", sub: "round trip · +$5.82" },
-  { at: T.sell3, p: 632, side: "sell", text: "Sold 0.43 BNB at $632.00", sub: "round trip · +$5.82" },
+  { at: T.buy1, p: 608, side: "buy", text: "Bought 105 wNEAR at $2.432", sub: "level 3 · fee $0.18" },
+  { at: T.buy2, p: 600, side: "buy", text: "Bought 105 wNEAR at $2.400", sub: "level 2 · fee $0.18" },
+  { at: T.buy3, p: 592, side: "buy", text: "Bought 107 wNEAR at $2.368", sub: "level 1 · fee $0.18" },
+  { at: T.sell1, p: 616, side: "sell", text: "Sold 105 wNEAR at $2.464", sub: "round trip · +$3.00" },
+  { at: T.sell2, p: 624, side: "sell", text: "Sold 105 wNEAR at $2.496", sub: "round trip · +$3.00" },
+  { at: T.sell3, p: 632, side: "sell", text: "Sold 107 wNEAR at $2.528", sub: "round trip · +$3.06" },
 ];
 
 /* ---------------------------------------------------------------- geometry */
@@ -153,8 +155,8 @@ const markerX = (now: number, at: number): number => xAt(N - 1 - (now - at) / SA
 /* --------------------------------------------------------------- component */
 
 function GridLadderExplainer({
-  pair = "BNB / USDT",
-  protocol = "PancakeSwap v3",
+  pair = "USDC / wNEAR",
+  protocol = "Rhea DCL",
   budget = "500 USDT",
 }: {
   pair?: string;
@@ -197,7 +199,7 @@ function GridLadderExplainer({
   const headY = y(price);
 
   const trips = [T.sell1, T.sell2, T.sell3].filter((t) => e >= t).length;
-  const realized = (trips * 5.82).toFixed(2);
+  const realized = [3.0, 3.0, 3.06].slice(0, trips).reduce((a, b) => a + b, 0).toFixed(2);
   const feed = FILLS.filter((f) => e >= f.at).slice(-4);
   const flash = FILLS.find((f) => e >= f.at && e < f.at + 700);
 
@@ -303,7 +305,7 @@ function GridLadderExplainer({
                   y={y(lv.p) + 4}
                   style={{ font: "var(--type-mono-xs)", fill: c }}
                 >
-                  ${lv.p}
+                  {USD(lv.p)}
                   {filled ? " FILLED" : armed ? " ARMED" : ""}
                 </text>
               </g>
@@ -359,7 +361,7 @@ function GridLadderExplainer({
             <g>
               <line x1={X0 + 22} y1={y(608)} x2={X0 + 22} y2={y(616)} stroke="var(--profit)" strokeWidth="2" />
               <text x={X0 + 30} y={(y(608) + y(616)) / 2 + 4} style={{ font: "var(--type-mono-xs)", fill: "var(--profit)" }}>
-                +$5.82 a round trip
+                +$3.00 a round trip
               </text>
             </g>
           ) : null}
@@ -444,7 +446,7 @@ function GridLadderExplainer({
         }}
       >
         <span>LADDER {budget}</span>
-        <span>SPACING $8</span>
+        <span>SPACING $0.032</span>
         <span>
           ROUND TRIPS <span style={{ color: "var(--ink-1)" }}>{trips}</span>
         </span>

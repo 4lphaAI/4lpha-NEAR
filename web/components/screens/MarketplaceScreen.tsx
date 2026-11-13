@@ -27,7 +27,7 @@ const MARKETPLACE_CARD_CSS = `
 @media (prefers-reduced-motion:reduce){.fl-marketplace-page .fl-zerofee__ring::before{animation:none}}
 `;
 
-function MarketplaceScreen({ go, onHire, search = "" }) {
+function MarketplaceScreen({ go, search = "" }) {
   const [filter, setFilter] = React.useState("all");
   const query = search.trim().toLocaleLowerCase();
   const list = AGENTS.filter((agent) => {
@@ -46,7 +46,7 @@ function MarketplaceScreen({ go, onHire, search = "" }) {
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <h1 style={{ font: "var(--type-page-title)" }}>Hire an agent</h1>
           <p style={{ font: "var(--type-body-md)", color: "var(--text-muted)", maxWidth: "56ch" }}>
-            Autonomous agents that work your DeFi positions on BNB Chain.
+            Autonomous agents that work your DeFi positions on NEAR.
           </p>
         </div>
       </div>

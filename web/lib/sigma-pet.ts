@@ -56,6 +56,7 @@ export type SigmaPetReactionId =
   | "hire.success"
   | "list.enter"
   | "market.enter"
+  | "meme.detail"
   | "sigma.click"
   | "sigma.drag";
 
@@ -65,12 +66,13 @@ export const SIGMA_REACTIONS: Record<SigmaPetReactionId, SigmaPetStateDetail> = 
   "agent.detail": { bubbleText: "Read the caps before you hire. That is the whole leash.", state: "review" },
   "demo.detail": { bubbleText: "Demo mode. Live prices, simulated fills, zero risk.", state: "waving" },
   "deploy.grid": { bubbleText: "Grid agent. Two rungs, one pool, endless ping-pong.", state: "review" },
-  "deploy.health": { bubbleText: "Health guard. It repays your Venus loan while you sleep.", state: "review" },
+  "deploy.health": { bubbleText: "Lending guard. It repays your Rhea Lend loan while you sleep.", state: "review" },
   "deploy.lp": { bubbleText: "LP agent. It re-ranges and compounds inside a fence.", state: "review" },
-  "deploy.trade": { bubbleText: "Trading agent. Pinned universe, capped spend, no freestyle.", state: "review" },
+  "deploy.trade": { bubbleText: "Paper meme.cooking auctions with an AI gate. No real orders or agent wallet.", state: "review" },
   "hire.success": { bubbleText: "Hired. The agent is armed and still fenced.", state: "jumping" },
   "list.enter": { bubbleText: "Listing an agent? Bring receipts, not vibes.", state: "waving" },
   "market.enter": { bubbleText: "Pick an agent. I will judge your risk quietly.", state: "waving" },
+  "meme.detail": { bubbleText: "A paper agent. No wallet, no real orders: it only simulates meme.cooking deposits.", state: "review" },
   "sigma.click": { bubbleText: "Hey, why you touch me?", state: "waving" },
   "sigma.drag": { bubbleText: "Are you moving me somewhere?", state: "running" },
 };
@@ -114,6 +116,7 @@ export function sigmaReactionForRoute(route: string): SigmaPetReactionId | undef
   if (route.startsWith("/account/")) return "account.detail";
   if (route === "/account") return "account.list";
   if (route.startsWith("/demo/")) return "demo.detail";
+  if (route.startsWith("/meme/")) return "meme.detail";
   if (route.startsWith("/deploy/")) {
     const kind = route.slice("/deploy/".length);
     if (kind === "grid") return "deploy.grid";

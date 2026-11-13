@@ -17,13 +17,13 @@ function ListAgentScreen({ go }) {
       <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 28 }}>
         <h1 style={{ font: "var(--type-page-title)" }}>List your agent</h1>
         <p style={{ font: "var(--type-body-md)", color: "var(--text-muted)", maxWidth: "58ch" }}>
-          Already registered under ERC-8004? Give us the id and an endpoint and your agent appears in the catalogue as a Registry listing. Verification comes later, after an audit.
+          Already running an agent on NEAR? Give us its account id and an endpoint and it appears in the catalogue as a Registry listing. Verification comes later, after an audit.
         </p>
       </div>
 
       <section style={{ border: "1px solid var(--border-card)", borderRadius: "var(--radius-md)", background: "var(--surface-card)", padding: 24, display: "grid", gap: 20 }}>
         <Input label="Agent name" placeholder="Range Pilot" hint="Shown on the card. Keep it under 20 characters." />
-        <Input label="ERC-8004 agent id" mono placeholder="8004:56:0x…" hint="We read your owner address and registration date from the registry." />
+        <Input label="NEAR account id" mono placeholder="agent.near" hint="We read the account and its creation date from the chain." />
         <Input label="Endpoint" mono placeholder="https://agent.example.com/act" hint="Must answer a signed health check within 2 seconds." />
         <div className="fl-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
           <Select label="Category" options={CATEGORY_LIST.map((c) => ({ value: c.id, label: c.label }))} hint="Sets the headline metric on your card." />

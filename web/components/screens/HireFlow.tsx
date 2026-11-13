@@ -72,7 +72,7 @@ function HireFlow({ agent, sheet, onClose, onDone }) {
             {agent.name} will be able to do exactly this, and nothing else:
           </p>
           <PermissionItem>Spend up to <b>{cap} USDT</b> per day from the ${amount} you delegated.</PermissionItem>
-          <PermissionItem>Trade only <b>{agent.pair || "BNB / USDT"}</b> on {agent.protocol}.</PermissionItem>
+          <PermissionItem>Trade only <b>{agent.pair || "USDC / wNEAR"}</b> on {agent.protocol}.</PermissionItem>
           <PermissionItem kind="deny">Send funds to any wallet but yours.</PermissionItem>
           <PermissionItem kind="deny">Touch the rest of your wallet.</PermissionItem>
           <PermissionItem kind="info" note="Revoking is a single on-chain transaction.">You can revoke anytime.</PermissionItem>

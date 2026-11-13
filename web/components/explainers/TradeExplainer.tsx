@@ -3,8 +3,8 @@
 "use client";
 import React from "react";
 const SCENES = [
-  { t: 0, title: "It screens tokenized stocks as they appear", body: "Every bStock on the venue is scored: volume, momentum, and the model's confidence in it." },
-  { t: 1700, title: "Your entry filter rejects most of them", body: "Under your confidence threshold, outside market hours, or already held — none of those get an entry." },
+  { t: 0, title: "It screens tokens on the Rhea list", body: "Every listed token is scored: volume, momentum, and the model's confidence in it." },
+  { t: 1700, title: "Your entry filter rejects most of them", body: "Under your confidence threshold, below the volume floor, or already held: none of those get an entry." },
   { t: 3300, title: "One passes, and it sizes the entry", body: "The entry is your fixed size, not the model's opinion, and it only opens if you have a free position slot." },
   { t: 4900, title: "From there it manages the position", body: "Your take-profit target sits above the entry, your stop below. Both are set before the trade exists." },
   { t: 6400, title: "Take-profit fills in stages", body: "The first target sells part of the position and moves the stop to break-even, so the rest runs at no risk to your capital." },
@@ -16,13 +16,13 @@ const VW = 700, VH = 292, N = 150, X0 = 300, X1 = 560;
 const yP = (pct) => 244 - (pct + 15) * (128 / 40);
 const YELLOW = "var(--cat-yield)";
 const CANDS = [
-  { t: 250, v: 1900, pair: "PLTRB", meta: "VOL +1.8x · CONF 61", ok: false, why: "confidence < 72" },
-  { t: 550, v: 2200, pair: "COINB", meta: "VOL +1.1x · CONF 54", ok: false, why: "below volume floor" },
-  { t: 850, v: 2500, pair: "MSTRB", meta: "VOL +0.9x · CONF 58", ok: false, why: "already held" },
-  { t: 1150, v: PASS_AT, pair: "NVDAB", meta: "VOL +3.2x · CONF 81", ok: true, why: "passes" },
+  { t: 250, v: 1900, pair: "AURORA", meta: "VOL +1.8x · CONF 61", ok: false, why: "confidence < 72" },
+  { t: 550, v: 2200, pair: "ITLX", meta: "VOL +1.1x · CONF 54", ok: false, why: "below volume floor" },
+  { t: 850, v: 2500, pair: "ZEC", meta: "VOL +0.9x · CONF 58", ok: false, why: "already held" },
+  { t: 1150, v: PASS_AT, pair: "RHEA", meta: "VOL +3.2x · CONF 81", ok: true, why: "passes" },
 ];
 
-function TradeExplainer({ pair = "NVDAB / USDT", protocol = "PancakeSwap v3" }) {
+function TradeExplainer({ pair = "RHEA / USDC", protocol = "Rhea" }) {
   const [e, setE] = React.useState(0);
   const [playing, setPlaying] = React.useState(true);
   const [pts, setPts] = React.useState(() => new Array(N).fill(yP(0)));
@@ -62,7 +62,7 @@ function TradeExplainer({ pair = "NVDAB / USDT", protocol = "PancakeSwap v3" }) 
   const headY = pts[pts.length - 1];
   const FILLS = [
     { t: PASS_AT, tone: "y", text: "3 of 4 candidates rejected", sub: "min confidence 72 · no re-entry · max 4 positions" },
-    { t: ENTRY_AT, tone: "y", text: "Entered 320 USDT", sub: "position 3 of 4 max · slippage cap 1%" },
+    { t: ENTRY_AT, tone: "y", text: "Entered 320 USDC", sub: "position 3 of 4 max · slippage cap 1%" },
     { t: TP_AT, tone: "ok", text: "TP1 filled at +25% on half", sub: "stop moved to break-even" },
     { t: EXIT_AT, tone: "ok", text: "Closed +19.8% net", sub: "0x4b71…9de · journaled" },
   ];
@@ -98,7 +98,7 @@ function TradeExplainer({ pair = "NVDAB / USDT", protocol = "PancakeSwap v3" }) 
             );
           })}
 
-          <text x={X0} y={24} style={{ font: "var(--type-mono-xs)", fill: "var(--text-subtle)" }}>{entered ? (closed ? "CLOSED · +19.8%" : passSym + " / USDT · OPEN") : "AWAITING A PASS"}</text>
+          <text x={X0} y={24} style={{ font: "var(--type-mono-xs)", fill: "var(--text-subtle)" }}>{entered ? (closed ? "CLOSED · +19.8%" : passSym + " / USDC · OPEN") : "AWAITING A PASS"}</text>
 
           <g style={{ opacity: entered ? 1 : 0.25, transition: "opacity .5s ease" }}>
             <line x1={X0} y1={yP(25)} x2={X1} y2={yP(25)} stroke={YELLOW} strokeWidth="1.5" strokeDasharray={tpHit ? "3 6" : undefined} />
@@ -117,7 +117,7 @@ function TradeExplainer({ pair = "NVDAB / USDT", protocol = "PancakeSwap v3" }) 
           <circle cx={X1} cy={headY} r="11" fill="none" stroke="var(--brand-line)" />
 
           <g style={{ opacity: entered ? 1 : 0, transition: "opacity .4s ease" }}>
-            <text x={X0} y={272} style={{ font: "var(--type-mono-xs)", fill: "var(--text-subtle)" }}>SIZE 320 USDT · SLOTS {closed ? "2" : "3"} / 4 · HOLD {closed ? "51" : "6"}H / 72H</text>
+            <text x={X0} y={272} style={{ font: "var(--type-mono-xs)", fill: "var(--text-subtle)" }}>SIZE 320 USDC · SLOTS {closed ? "2" : "3"} / 4 · HOLD {closed ? "51" : "6"}H / 72H</text>
           </g>
         </svg>
       </div>
@@ -144,7 +144,7 @@ function TradeExplainer({ pair = "NVDAB / USDT", protocol = "PancakeSwap v3" }) 
       </div>
 
       <div style={{ borderTop: "1px solid var(--line-1)", padding: "14px 20px", display: "flex", gap: 24, flexWrap: "wrap", font: "var(--type-mono-xs)", color: "var(--text-subtle)" }}>
-        <span>TOKENIZED US STOCKS ONLY</span><span>MAX 4 OPEN POSITIONS</span><span>TP +25% / SL -15%</span><span>MAX HOLD 72H</span>
+        <span>RHEA TOKEN LIST ONLY</span><span>MAX 4 OPEN POSITIONS</span><span>TP +25% / SL -15%</span><span>MAX HOLD 72H</span>
       </div>
     </section>
   );

@@ -1,0 +1,105 @@
+{
+  "final_execution_status": "FINAL",
+  "status": {
+    "SuccessValue": ""
+  },
+  "transaction": {
+    "signer_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "receiver_id": "wrap.near",
+    "hash": "synthetic-1",
+    "actions": [
+      {
+        "FunctionCall": {
+          "method_name": "near_deposit",
+          "gas": 30000000000000,
+          "deposit": "45000000000000000000000",
+          "args": "e30="
+        }
+      }
+    ]
+  },
+  "transaction_outcome": {
+    "id": "synthetic-1",
+    "block_hash": "synthetic-2",
+    "outcome": {
+      "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": {
+        "SuccessReceiptId": "synthetic-3"
+      },
+      "logs": [],
+      "receipt_ids": [
+        "synthetic-3"
+      ],
+      "tokens_burnt": "30872707201000000000"
+    }
+  },
+  "receipts_outcome": [
+    {
+      "id": "synthetic-3",
+      "block_hash": "synthetic-4",
+      "outcome": {
+        "executor_id": "wrap.near",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [
+          "[sanitized log]"
+        ],
+        "receipt_ids": [
+          "synthetic-5"
+        ],
+        "tokens_burnt": "164808666289000000000"
+      }
+    },
+    {
+      "id": "synthetic-5",
+      "block_hash": "synthetic-6",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "synthetic-3",
+      "predecessor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receiver_id": "wrap.near",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "FunctionCall": {
+                "method_name": "near_deposit",
+                "gas": 30000000000000,
+                "deposit": "45000000000000000000000",
+                "args": "e30="
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-5",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "30723282136787000000000"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

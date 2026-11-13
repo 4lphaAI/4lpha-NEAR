@@ -1,0 +1,133 @@
+{
+  "final_execution_status": "FINAL",
+  "status": {
+    "Failure": "Account is not registered"
+  },
+  "transaction": {
+    "signer_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "receiver_id": "wrap.near",
+    "hash": "synthetic-1",
+    "actions": [
+      {
+        "FunctionCall": {
+          "method_name": "ft_transfer",
+          "gas": 30000000000000,
+          "deposit": "1",
+          "args": "eyJyZWNlaXZlcl9pZCI6InVzZXIubmVhciIsImFtb3VudCI6IjEifQ=="
+        }
+      }
+    ]
+  },
+  "transaction_outcome": {
+    "id": "synthetic-1",
+    "block_hash": "synthetic-2",
+    "outcome": {
+      "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": {
+        "SuccessReceiptId": "synthetic-3"
+      },
+      "logs": [],
+      "receipt_ids": [
+        "synthetic-3"
+      ],
+      "tokens_burnt": "31311397379000000000"
+    }
+  },
+  "receipts_outcome": [
+    {
+      "id": "synthetic-3",
+      "block_hash": "synthetic-4",
+      "outcome": {
+        "executor_id": "wrap.near",
+        "status": {
+          "Failure": "Account is not registered"
+        },
+        "logs": [],
+        "receipt_ids": [
+          "synthetic-5",
+          "synthetic-6"
+        ],
+        "tokens_burnt": "154837095544400000000"
+      }
+    },
+    {
+      "id": "synthetic-5",
+      "block_hash": "synthetic-7",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    },
+    {
+      "id": "synthetic-6",
+      "block_hash": "synthetic-7",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "synthetic-3",
+      "predecessor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receiver_id": "wrap.near",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "FunctionCall": {
+                "method_name": "ft_transfer",
+                "gas": 30000000000000,
+                "deposit": "1",
+                "args": "eyJyZWNlaXZlcl9pZCI6InVzZXIubmVhciIsImFtb3VudCI6IjEifQ=="
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-5",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "1"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-6",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "30733459413459600000000"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

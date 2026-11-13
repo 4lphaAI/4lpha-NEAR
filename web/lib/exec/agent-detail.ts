@@ -456,7 +456,7 @@ export type AgentDetailView = {
     /** Where `observedTick` came from: the page's own RPC poll, the worker's record, or nowhere. */
     readonly tickSource: "live" | "worker" | null;
     readonly rangeUnavailableBecause: string | null;
-    readonly liveRows: number;
+    readonly liveRows: number | null;
   };
 };
 

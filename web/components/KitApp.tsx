@@ -11,16 +11,18 @@ import { AGENTS } from "@/lib/design-data";
 import { KitHeader } from "@/components/screens/KitHeader";
 import { MarketplaceScreen } from "@/components/screens/MarketplaceScreen";
 import { AgentDetailScreen } from "@/components/screens/AgentDetailScreen";
-import { HireFlow } from "@/components/screens/HireFlow";
+import { NearDeployScreen } from "@/components/near/NearDeployScreen";
 import { ListAgentScreen } from "@/components/screens/ListAgentScreen";
-import { SkillsScreen } from "@/components/screens/SkillsScreen";
+import { NearAccountScreen } from "@/components/near/NearAccountScreen";
+import { NearJobScreen } from "@/components/near/NearJobScreen";
+import { NearTradeDeployScreen } from "@/components/near/NearTradeDeployScreen";
+import { NearMemeScreen } from "@/components/near/NearMemeScreen";
+import { NearDemoScreen } from "@/components/near/NearDemoScreen";
 import { SigmaPet } from "@/components/SigmaPet";
 import { dispatchSigmaPetReaction } from "@/lib/sigma-pet";
 
 export function KitApp() {
   const [route, setRoute] = React.useState("/");
-  const [hiring, setHiring] = React.useState<Record<string, unknown> | null>(null);
-  const [empty, setEmpty] = React.useState(false);
   const [sheet, setSheet] = React.useState(false);
   const [search, setSearch] = React.useState("");
 
@@ -50,6 +52,7 @@ export function KitApp() {
   }, []);
 
   const go = (r: string) => {
+    if (r === "/deploy/trading") r = "/deploy/trade";
     setRoute(r);
     if (window.location.pathname !== r) window.history.pushState(null, "", r);
     window.scrollTo(0, 0);
@@ -57,19 +60,22 @@ export function KitApp() {
   const agentFrom = (prefix: string) => AGENTS.find((a) => a.id === route.slice(prefix.length)) || AGENTS[0];
 
   let screen;
-  if (route.startsWith("/agent/")) screen = <AgentDetailScreen agent={agentFrom("/agent/")} go={go} onHire={setHiring} />;
-  else if (route === "/skills") screen = <SkillsScreen go={go} />;
+  if (route.startsWith("/agent/")) screen = <AgentDetailScreen agent={agentFrom("/agent/")} go={go} />;
+  else if (route.startsWith("/meme/")) screen = <NearMemeScreen key={route} agentId={route.slice("/meme/".length)} go={go} />;
+  else if (route.startsWith("/demo/")) screen = <NearDemoScreen key={route} agentId={route.slice("/demo/".length)} go={go} />;
+  // Trade V1 section 14: the selected execution model lives in the route.
+  else if (route === "/deploy/trade" || route === "/deploy/trade/schedule" || route === "/deploy/trade/dca") screen = <NearTradeDeployScreen go={go}
+    model={route === "/deploy/trade/schedule" ? "schedule" : route === "/deploy/trade/dca" ? "dca" : "degen"} />;
+  else if (route.startsWith("/account/")) screen = <NearJobScreen key={route.slice("/account/".length)} jobId={route.slice("/account/".length)} go={go} />;
+  else if (route === "/deploy/grid" || route === "/deploy/lp") screen = <NearDeployScreen key={route} kind={route === "/deploy/lp" ? "lp" : "grid"} go={go} />;
+  else if (route === "/account") screen = <NearAccountScreen go={go} />;
   else if (route === "/list-your-agent") screen = <ListAgentScreen go={go} />;
-  else screen = <MarketplaceScreen go={go} onHire={setHiring} search={search} />;
+  else screen = <MarketplaceScreen go={go} search={search} />;
 
   return (
     <div className="fl-page">
       <KitHeader route={route} go={go} search={search} onSearchChange={setSearch} />
       {screen}
-      {hiring && (
-        <HireFlow agent={hiring} sheet={sheet} onClose={() => setHiring(null)}
-          onDone={() => { setHiring(null); setEmpty(false); dispatchSigmaPetReaction("hire.success", { force: true }); go("/account"); }} />
-      )}
       {/* Decoration only — the pet reads no state and calls nothing. */}
       <SigmaPet route={route} />
     </div>

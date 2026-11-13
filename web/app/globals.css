@@ -819,6 +819,8 @@ button { font: inherit; color: inherit; }
 .fl-seg__opt--active{background:var(--raised-3);color:var(--ink-1)}
 .fl-seg__opt--active.fl-seg__opt--accent{background:var(--brand);color:var(--ink-inverse)}
 .fl-seg__opt--active.fl-seg__opt--accent[data-seg="paper"]{background:var(--cat-grid);color:var(--ink-inverse)}
+.fl-seg--mini{padding:1px}
+.fl-seg--mini .fl-seg__opt{height:20px;min-height:0;padding:0 7px;font:var(--weight-medium) 10px/1 var(--font-mono);letter-spacing:0.06em}
 
 /* Badges & chips --------------------------------------------------- */
 .fl-status{display:inline-flex;align-items:center;gap:var(--space-3);font:var(--weight-medium) var(--text-sm)/1 var(--font-sans);white-space:nowrap}
@@ -831,6 +833,7 @@ button { font: inherit; color: inherit; }
 
 .fl-tier{display:inline-flex;align-items:center;gap:var(--space-2);height:20px;padding:0 var(--space-3) 0 var(--space-3);border:var(--border-width) solid;border-radius:var(--radius-xs);font:var(--weight-medium) var(--text-xs)/1 var(--font-sans);letter-spacing:var(--tracking-wide);white-space:nowrap}
 .fl-tier--verified{color:var(--tier-verified);border-color:var(--tier-verified-line);background:var(--brand-tint)}
+.fl-tier--soon{color:var(--text-subtle);border-color:var(--line-2);background:transparent}
 .fl-tier--registry{color:var(--tier-registry);border-color:var(--tier-registry-line);background:transparent}
 
 .fl-chip{display:inline-flex;align-items:center;gap:var(--space-3);height:30px;padding:0 var(--space-5);border:var(--border-width) solid var(--line-1);border-radius:var(--radius-pill);background:var(--surface-card);color:var(--text-muted);font:var(--weight-medium) var(--text-base)/1 var(--font-sans);cursor:pointer;transition:var(--transition-control)}
@@ -1167,6 +1170,7 @@ button { font: inherit; color: inherit; }
   .fl-seg{max-width:100%;overflow-x:auto;scrollbar-width:none}
   .fl-seg::-webkit-scrollbar{display:none}
   .fl-seg__opt{flex:0 0 auto}
+  .fl-seg--mini .fl-seg__opt{min-height:0}
 
   .fl-deploy-landing{margin-bottom:32px!important;padding-bottom:32px!important}
   .fl-deploy-form{padding:18px!important}

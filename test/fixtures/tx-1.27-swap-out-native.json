@@ -1,0 +1,488 @@
+{
+  "final_execution_status": "FINAL",
+  "status": {
+    "SuccessValue": "IjU2NDc4Ig=="
+  },
+  "transaction": {
+    "signer_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "receiver_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+    "hash": "synthetic-1",
+    "actions": [
+      {
+        "FunctionCall": {
+          "method_name": "ft_transfer_call",
+          "gas": 300000000000000,
+          "deposit": "1",
+          "args": "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJhbW91bnQiOiI1NjQ3OCIsIm1zZyI6IntcImZvcmNlXCI6MCxcInNraXBfdW53cmFwX25lYXJcIjpmYWxzZSxcImFjdGlvbnNcIjpbe1widG9rZW5faW5cIjpcIjE3MjA4NjI4Zjg0ZjVkNmFkMzNmMGRhM2JiYmViMjdmZmNiMzk4ZWFjNTAxYTMxYmQ2YWQyMDExZTM2MTMzYTFcIixcInRva2VuX291dFwiOlwid3JhcC5uZWFyXCIsXCJhbW91bnRfaW5cIjpcIjU2NDc4XCIsXCJtaW5fYW1vdW50X291dFwiOlwiMTQ3NDUzNTkwMDQ0MDQ1MDkyNjk2MjJcIixcInBvb2xfaWRcIjo0NTEyfV19In0="
+        }
+      }
+    ]
+  },
+  "transaction_outcome": {
+    "id": "synthetic-1",
+    "block_hash": "synthetic-2",
+    "outcome": {
+      "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": {
+        "SuccessReceiptId": "synthetic-3"
+      },
+      "logs": [],
+      "receipt_ids": [
+        "synthetic-3"
+      ],
+      "tokens_burnt": "32393817709500000000"
+    }
+  },
+  "receipts_outcome": [
+    {
+      "id": "synthetic-3",
+      "block_hash": "synthetic-4",
+      "outcome": {
+        "executor_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        "status": {
+          "SuccessReceiptId": "synthetic-5"
+        },
+        "logs": [
+          "[sanitized log]"
+        ],
+        "receipt_ids": [
+          "synthetic-6",
+          "synthetic-5",
+          "synthetic-7"
+        ],
+        "tokens_burnt": "319033825377000000000"
+      }
+    },
+    {
+      "id": "synthetic-6",
+      "block_hash": "synthetic-8",
+      "outcome": {
+        "executor_id": "v2.ref-finance.near",
+        "status": {
+          "SuccessValue": "IjAi"
+        },
+        "logs": [
+          "[sanitized log]",
+          "[sanitized log]"
+        ],
+        "receipt_ids": [
+          "synthetic-9",
+          "synthetic-10",
+          "synthetic-11"
+        ],
+        "tokens_burnt": "720040300227500000000"
+      }
+    },
+    {
+      "id": "synthetic-9",
+      "block_hash": "synthetic-12",
+      "outcome": {
+        "executor_id": "wrap.near",
+        "status": {
+          "SuccessReceiptId": "synthetic-13"
+        },
+        "logs": [
+          "[sanitized log]"
+        ],
+        "receipt_ids": [
+          "synthetic-13",
+          "synthetic-14"
+        ],
+        "tokens_burnt": "182695858616900000000"
+      }
+    },
+    {
+      "id": "synthetic-13",
+      "block_hash": "synthetic-15",
+      "outcome": {
+        "executor_id": "v2.ref-finance.near",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [
+          "synthetic-16"
+        ],
+        "tokens_burnt": "22318256250000000000"
+      }
+    },
+    {
+      "id": "synthetic-16",
+      "block_hash": "synthetic-17",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    },
+    {
+      "id": "synthetic-14",
+      "block_hash": "synthetic-15",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    },
+    {
+      "id": "synthetic-10",
+      "block_hash": "synthetic-17",
+      "outcome": {
+        "executor_id": "v2.ref-finance.near",
+        "status": {
+          "SuccessValue": "IjE0ODk0MzAyMDI0NjUxMDE5NDY0MjY1Ig=="
+        },
+        "logs": [],
+        "receipt_ids": [
+          "synthetic-18",
+          "synthetic-19"
+        ],
+        "tokens_burnt": "305299873411400000000"
+      }
+    },
+    {
+      "id": "synthetic-18",
+      "block_hash": "synthetic-20",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [
+          "synthetic-21"
+        ],
+        "tokens_burnt": "752494768750000000000"
+      }
+    },
+    {
+      "id": "synthetic-21",
+      "block_hash": "synthetic-22",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    },
+    {
+      "id": "synthetic-19",
+      "block_hash": "synthetic-20",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    },
+    {
+      "id": "synthetic-11",
+      "block_hash": "synthetic-12",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    },
+    {
+      "id": "synthetic-5",
+      "block_hash": "synthetic-12",
+      "outcome": {
+        "executor_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+        "status": {
+          "SuccessValue": "IjU2NDc4Ig=="
+        },
+        "logs": [],
+        "receipt_ids": [
+          "synthetic-23"
+        ],
+        "tokens_burnt": "183806516537700000000"
+      }
+    },
+    {
+      "id": "synthetic-23",
+      "block_hash": "synthetic-15",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    },
+    {
+      "id": "synthetic-7",
+      "block_hash": "synthetic-8",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "synthetic-3",
+      "predecessor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receiver_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "FunctionCall": {
+                "method_name": "ft_transfer_call",
+                "gas": 300000000000000,
+                "deposit": "1",
+                "args": "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJhbW91bnQiOiI1NjQ3OCIsIm1zZyI6IntcImZvcmNlXCI6MCxcInNraXBfdW53cmFwX25lYXJcIjpmYWxzZSxcImFjdGlvbnNcIjpbe1widG9rZW5faW5cIjpcIjE3MjA4NjI4Zjg0ZjVkNmFkMzNmMGRhM2JiYmViMjdmZmNiMzk4ZWFjNTAxYTMxYmQ2YWQyMDExZTM2MTMzYTFcIixcInRva2VuX291dFwiOlwid3JhcC5uZWFyXCIsXCJhbW91bnRfaW5cIjpcIjU2NDc4XCIsXCJtaW5fYW1vdW50X291dFwiOlwiMTQ3NDUzNTkwMDQ0MDQ1MDkyNjk2MjJcIixcInBvb2xfaWRcIjo0NTEyfV19In0="
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-6",
+      "predecessor_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      "receiver_id": "v2.ref-finance.near",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "FunctionCall": {
+                "method_name": "ft_on_transfer",
+                "gas": 280460585355484,
+                "deposit": "0",
+                "args": "eyJzZW5kZXJfaWQiOiJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiYW1vdW50IjoiNTY0NzgiLCJtc2ciOiJ7XCJmb3JjZVwiOjAsXCJza2lwX3Vud3JhcF9uZWFyXCI6ZmFsc2UsXCJhY3Rpb25zXCI6W3tcInRva2VuX2luXCI6XCIxNzIwODYyOGY4NGY1ZDZhZDMzZjBkYTNiYmJlYjI3ZmZjYjM5OGVhYzUwMWEzMWJkNmFkMjAxMWUzNjEzM2ExXCIsXCJ0b2tlbl9vdXRcIjpcIndyYXAubmVhclwiLFwiYW1vdW50X2luXCI6XCI1NjQ3OFwiLFwibWluX2Ftb3VudF9vdXRcIjpcIjE0NzQ1MzU5MDA0NDA0NTA5MjY5NjIyXCIsXCJwb29sX2lkXCI6NDUxMn1dfSJ9"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-9",
+      "predecessor_id": "v2.ref-finance.near",
+      "receiver_id": "wrap.near",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "FunctionCall": {
+                "method_name": "near_withdraw",
+                "gas": 20000000000000,
+                "deposit": "1",
+                "args": "eyJhbW91bnQiOiIxNDg5NDMwMjAyNDY1MTAxOTQ2NDI2NSJ9"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-13",
+      "predecessor_id": "wrap.near",
+      "receiver_id": "v2.ref-finance.near",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "14894302024651019464266"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-16",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "200864306250000000000"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-14",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "20482290639649100000000"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-10",
+      "predecessor_id": "v2.ref-finance.near",
+      "receiver_id": "v2.ref-finance.near",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "FunctionCall": {
+                "method_name": "exchange_callback_post_withdraw_near",
+                "gas": 10000000000000,
+                "deposit": "0",
+                "args": "eyJzZW5kZXJfaWQiOiJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiYW1vdW50IjoiMTQ4OTQzMDIwMjQ2NTEwMTk0NjQyNjUifQ=="
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-18",
+      "predecessor_id": "v2.ref-finance.near",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "14894302024651019464265"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-21",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "6772452918750000000000"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-19",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "3058149565122600000000"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-11",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "248852874607772500000000"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-5",
+      "predecessor_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      "receiver_id": "17208628f84f5d6ad33f0da3bbbeb27ffcb398eac501a31bd6ad2011e36133a1",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "FunctionCall": {
+                "method_name": "ft_resolve_transfer",
+                "gas": 15460585355484,
+                "deposit": "0",
+                "args": "eyJyZWNlaXZlcl9pZCI6InYyLnJlZi1maW5hbmNlLm5lYXIiLCJzZW5kZXJfaWQiOiJhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhIiwiYW1vdW50IjoiNTY0NzgifQ=="
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-23",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "16165178200914300000000"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-7",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "2871304428393000000000"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

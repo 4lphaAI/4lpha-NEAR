@@ -19,6 +19,7 @@ import {
 import {
   TIMEFRAMES,
   parseMarketDataResponse,
+  snapMarkers,
   toChartSeriesData,
   type Candle,
   type MarketDataMeta,
@@ -49,6 +50,8 @@ interface MarketChartProps {
   embedded?: boolean;
   height?: number;
   defaultInterval?: Timeframe;
+  /** NEAR pools: "usd" or "token" (the quote token); sent to the data plane as is. */
+  currency?: "usd" | "token";
 }
 
 // Lightweight Charts paints on a canvas and parses colours itself, so it understands
@@ -81,7 +84,7 @@ function measureWidth(container: HTMLDivElement): number {
   return width > 0 ? width : 600;
 }
 
-export function MarketChart({ kind, address, title, candles: suppliedCandles, markers = [], priceLines = [], embedded = false, height = 470, defaultInterval = "1m" }: MarketChartProps) {
+export function MarketChart({ kind, address, title, candles: suppliedCandles, markers = [], priceLines = [], embedded = false, height = 470, defaultInterval = "1m", currency }: MarketChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -94,6 +97,8 @@ export function MarketChart({ kind, address, title, candles: suppliedCandles, ma
   const [error, setError] = useState<string | null>(null);
   const [refreshVersion, setRefreshVersion] = useState(0);
   const candles = suppliedCandles ?? loadedCandles;
+
+  useEffect(() => { setInterval(defaultInterval); }, [defaultInterval]);
 
   useEffect(() => {
     if (suppliedCandles !== undefined) return;
@@ -189,11 +194,12 @@ export function MarketChart({ kind, address, title, candles: suppliedCandles, ma
     setLoading(true);
     setError(null);
 
-    const query = new URLSearchParams({ kind, address, interval, limit: "300" });
+    const query = new URLSearchParams({ kind, address, interval, limit: "300", ...(currency === undefined ? {} : { currency }) });
     void fetch(`/api/market-data/ohlcv?${query.toString()}`, { signal: controller.signal })
       .then(async (response) => {
         const payload = (await response.json()) as unknown;
-        if (!response.ok) throw new Error("Candles are temporarily unavailable.");
+        const failure = (payload as { error?: { message?: unknown } } | null)?.error?.message;
+        if (!response.ok) throw new Error(typeof failure === "string" ? failure : "Candles are temporarily unavailable.");
         return parseMarketDataResponse(payload);
       })
       .then((result) => {
@@ -203,6 +209,8 @@ export function MarketChart({ kind, address, title, candles: suppliedCandles, ma
       })
       .catch((reason: unknown) => {
         if (reason instanceof DOMException && reason.name === "AbortError") return;
+        setLoadedCandles([]);
+        setMeta(null);
         setError(reason instanceof Error ? reason.message : "Candles are temporarily unavailable.");
       })
       .finally(() => {
@@ -210,7 +218,7 @@ export function MarketChart({ kind, address, title, candles: suppliedCandles, ma
       });
 
     return () => controller.abort();
-  }, [address, interval, kind, refreshVersion, suppliedCandles]);
+  }, [address, currency, interval, kind, refreshVersion, suppliedCandles]);
 
   useEffect(() => {
     const series = toChartSeriesData([...candles]);
@@ -253,9 +261,8 @@ export function MarketChart({ kind, address, title, candles: suppliedCandles, ma
   }, [priceLines, candles]);
 
   useEffect(() => {
-    // A marker older than the loaded window would be pinned to the left edge; it is not shown.
-    const firstCandleMs = candles[0]?.timestamp ?? Number.NEGATIVE_INFINITY;
-    markerSeriesRef.current?.setMarkers(markers.filter((marker) => marker.timestamp >= firstCandleMs).map((marker) => ({
+    // Each marker sits on the loaded candle that contains it; one outside the loaded window is not shown.
+    markerSeriesRef.current?.setMarkers(snapMarkers(candles, markers).map((marker) => ({
       time: Math.floor(marker.timestamp / 1_000) as UTCTimestamp,
       position: marker.side === "buy" ? "belowBar" : "aboveBar",
       shape: marker.side === "buy" ? "arrowUp" : "arrowDown",
@@ -274,7 +281,14 @@ export function MarketChart({ kind, address, title, candles: suppliedCandles, ma
   }, [meta, title]);
 
   if (embedded) {
-    return <div ref={containerRef} style={{ width: "100%", height, display: "block" }} data-testid="candlestick-chart" />;
+    const sampled = meta?.source.startsWith("near-chain") === true;
+    return (
+      <div style={{ position: "relative" }}>
+        <div ref={containerRef} style={{ width: "100%", height, display: "block" }} data-testid="candlestick-chart" />
+        {!loading && error ? <div role="status" style={{ position: "absolute", inset: 0, display: "grid", placeItems: "center", font: "var(--type-body-sm)", color: "var(--text-subtle)" }}>{error}</div> : null}
+        {sampled ? <div style={{ marginTop: 6, font: "var(--type-mono-xs)", color: "var(--text-subtle)" }}>{meta?.staleness !== "fresh" ? "Delayed. " : ""}{meta?.source.includes("geckoterminal") ? "Recent candles sampled from pool state every 15 s, older ones from GeckoTerminal. No volume." : "Sampled from pool state every 15 s, no volume."}</div> : null}
+      </div>
+    );
   }
 
   return (

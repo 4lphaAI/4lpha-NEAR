@@ -6,16 +6,16 @@ import React from "react";
    allocation template + target weights, rebalance when drift exceeds X%, check every N days,
    min rebalance trade, auto-invest new deposits, rebalance only while markets are open. */
 const BASKET = [
-  { sym: "NVDAB", target: 30 }, { sym: "TSLAB", target: 25 }, { sym: "AAPLB", target: 25 }, { sym: "SPYB", target: 20 },
+  { sym: "wNEAR", target: 30 }, { sym: "RHEA", target: 25 }, { sym: "AURORA", target: 25 }, { sym: "ZEC", target: 20 },
 ];
 const BAND = 5, MIN_TRADE = 25;
 const SCENES = [
-  { t: 0, title: "You set a basket and its target weights", body: "1,000 USDT across four bStocks at 30 / 25 / 25 / 20. Start from equal weight, market-cap weighted, or set your own." },
-  { t: 1500, title: "Prices move, and the weights drift", body: "When one stock outruns the others, its share of the basket grows past target. The agent checks on your schedule, every day by default." },
+  { t: 0, title: "You set a basket and its target weights", body: "1,000 USDC across four tokens at 30 / 25 / 25 / 20. Start from equal weight, market-cap weighted, or set your own." },
+  { t: 1500, title: "Prices move, and the weights drift", body: "When one token outruns the others, its share of the basket grows past target. The agent checks on your schedule, every day by default." },
   { t: 3000, title: "Inside the drift band, it holds", body: "If every weight is still within 5% of target, the check ends there. No trade, no gas spent on noise." },
-  { t: 6000, title: "Past the band, it rebalances to target", body: "It sells the overweight stock and buys the underweight ones on the venue, inside your slippage cap." },
+  { t: 6000, title: "Past the band, it rebalances to target", body: "It sells the overweight token and buys the underweight ones on the venue, inside your slippage cap." },
   { t: 7300, title: "Small legs are skipped", body: "Any leg under your $25 minimum rebalance trade is left alone, because it would cost more in gas than it corrects." },
-  { t: 9400, title: "New deposits go straight into the weights", body: "With auto-invest on, new USDT is split across the basket instead of sitting idle. With market hours on, it only trades while the underlying markets are open." },
+  { t: 9400, title: "New deposits go straight into the weights", body: "With auto-invest on, new USDC is split across the basket instead of sitting idle." },
 ];
 const TOTAL = 12000;
 const KEYS = [
@@ -47,7 +47,7 @@ const tx = (t) => TL0 + (t / TOTAL) * (TL1 - TL0);
 const YELLOW = "var(--cat-yield)";
 const mono = { font: "var(--type-mono-xs)" };
 
-function SmartExplainer({ protocol = "PancakeSwap v3" }) {
+function SmartExplainer({ protocol = "Rhea" }) {
   const [e, setE] = React.useState(0);
   const [playing, setPlaying] = React.useState(true);
   const st = React.useRef({ e: 0, last: 0, playing: true });
@@ -80,11 +80,11 @@ function SmartExplainer({ protocol = "PancakeSwap v3" }) {
 
   const FEED = [
     { t: 3000, tone: "ok", text: "Check 1 · hold", sub: "max drift +2.4% · inside the ±5% band" },
-    { t: 6000, tone: "y", text: "Check 2 · rebalance", sub: "NVDAB +7.2% over target" },
-    { t: 6300, tone: "ok", text: "Sold 68 USDT NVDAB · bought TSLAB 33 · SPYB 35", sub: protocol },
-    { t: 7300, tone: "y", text: "AAPLB leg skipped", sub: `8 USDT < $${MIN_TRADE} minimum trade` },
+    { t: 6000, tone: "y", text: "Check 2 · rebalance", sub: "wNEAR +7.2% over target" },
+    { t: 6300, tone: "ok", text: "Sold 68 USDC wNEAR · bought RHEA 33 · ZEC 35", sub: protocol },
+    { t: 7300, tone: "y", text: "AURORA leg skipped", sub: `8 USDC < $${MIN_TRADE} minimum trade` },
     { t: 8400, tone: "ok", text: "Check 3 · hold", sub: "max drift +0.8%" },
-    { t: DEPOSIT_AT, tone: "ok", text: "Deposit 200 USDT auto-invested", sub: "split across the basket by target weight" },
+    { t: DEPOSIT_AT, tone: "ok", text: "Deposit 200 USDC auto-invested", sub: "split across the basket by target weight" },
   ];
   const feed = FEED.filter((f) => e >= f.t).slice(-2);
   const tint = (t) => (t === "ok" ? "var(--live-tint)" : "var(--cat-yield-tint)");
@@ -145,13 +145,13 @@ function SmartExplainer({ protocol = "PancakeSwap v3" }) {
           <line x1={RX - 12} x2={RX - 12} y1={14} y2={268} stroke="var(--line-1)" />
           <text x={RX} y={24} style={{ ...mono, fill: "var(--text-subtle)" }}>PORTFOLIO</text>
           <text x={RX} y={52} style={{ font: "var(--weight-semibold) 20px/1 var(--font-mono)", fill: "var(--ink-1)" }}>{Math.round(v).toLocaleString("en-US")}</text>
-          <text x={RX} y={70} style={{ ...mono, fill: "var(--text-muted)" }}>USDT · 4 BSTOCKS</text>
+          <text x={RX} y={70} style={{ ...mono, fill: "var(--text-muted)" }}>USDC · 4 TOKENS</text>
 
           <text x={RX} y={104} style={{ ...mono, fill: "var(--text-subtle)" }}>MAX DRIFT</text>
           <text x={RX} y={122} style={{ ...mono, fill: Math.abs(maxDrift) > BAND ? YELLOW : "var(--ink-1)" }}>{BASKET[maxIdx].sym} {sgn(maxDrift)}% · BAND ±{BAND}%</text>
 
           <text x={RX} y={156} style={{ ...mono, fill: "var(--text-subtle)" }}>LAST CHECK</text>
-          <text x={RX} y={174} style={{ ...mono, fill: "var(--ink-1)" }}>{rebalancing ? "REBALANCING…" : lastCheck ? (lastCheck.act === "rebalance" ? "REBALANCED · 3 LEGS · 1 SKIPPED" : "HOLD · INSIDE BAND") : "—"}</text>
+          <text x={RX} y={174} style={{ ...mono, fill: "var(--ink-1)" }}>{rebalancing ? "REBALANCING…" : lastCheck ? (lastCheck.act === "rebalance" ? "REBALANCED · 3 LEGS · 1 SKIPPED" : "HOLD · INSIDE BAND") : "-"}</text>
 
           <text x={RX} y={208} style={{ ...mono, fill: "var(--text-subtle)" }}>NEXT CHECK</text>
           <text x={RX} y={226} style={{ ...mono, fill: "var(--ink-1)" }}>{nextCheck ? "DAY " + (CHECKS.indexOf(nextCheck) + 1) + " · EVERY 1 DAY" : "DAY 4 · EVERY 1 DAY"}</text>
@@ -181,7 +181,7 @@ function SmartExplainer({ protocol = "PancakeSwap v3" }) {
       </div>
 
       <div style={{ borderTop: "1px solid var(--line-1)", padding: "14px 20px", display: "flex", gap: 24, flexWrap: "wrap", font: "var(--type-mono-xs)", color: "var(--text-subtle)" }}>
-        <span>BSTOCKS BASKET</span><span>EQUAL · MARKET-CAP · CUSTOM</span><span>DRIFT BAND 1 – 50%</span><span>MIN TRADE $25</span><span>AUTO-INVEST DEPOSITS</span>
+        <span>TOKEN BASKET</span><span>EQUAL · MARKET-CAP · CUSTOM</span><span>DRIFT BAND 1 – 50%</span><span>MIN TRADE $25</span><span>AUTO-INVEST DEPOSITS</span>
       </div>
     </section>
   );

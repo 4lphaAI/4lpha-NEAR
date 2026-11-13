@@ -38,7 +38,10 @@ export interface Agent {
 }
 
 /** Public deploy route for the hire action on marketplace and detail cards. */
-export function agentDeployKind(agent: Pick<Agent, "categoryId">): "grid" | "trading" | "lp" | "lending" {
+export function agentDeployKind(agent: Pick<Agent, "categoryId" | "id">): "grid" | "trading" | "trade/schedule" | "trade/dca" | "lp" | "lending" {
+  // Trade V1 section 14: the two live trading agents open their own card on the trade deploy screen.
+  if (agent.id === "recurring-buy") return "trade/schedule";
+  if (agent.id === "auto-dca") return "trade/dca";
   if (agent.categoryId === "grid") return "grid";
   if (agent.categoryId === "trading") return "trading";
   if (agent.categoryId === "lp") return "lp";
@@ -57,69 +60,33 @@ export interface HiredAgent {
 }
 
 export const AGENTS: Agent[] = [
-  { id: "grid-keeper", name: "Grid Keeper", categoryId: "grid", protocol: "PancakeSwap v3", tier: "verified", status: "live",
-    tagline: "A wider, slower grid for people who trade less often.",
-    metricValue: "+18.2%", metricTone: "profit", hiredCount: 412, price: "$12", priceUnit: "per month",
-    pair: "BNB / USDT", dailyCap: "500 USDT", series: [0,18,12,44,38,70,96,88,132,160,151,190,214,240,284],
-    metrics: [
-      { label: "30d PnL", value: "+18.2%", tone: "profit", note: "net of fees" },
-      { label: "Trades / week", value: "126", note: "median 18 per day" },
-      { label: "Max drawdown", value: "-4.1%", tone: "loss", note: "worst 30d window" },
-      { label: "Running since", value: "412d", note: "no manual stops" },
-    ],
-    activity: [
-      { title: "Bought 0.42 BNB at grid level 3", detail: "Filled at $612.40 · fee $0.18", time: "4m ago", txHash: "0x8f2a…c41", icon: "activate", tone: "live" },
-      { title: "Sold 0.31 BNB at grid level 6", detail: "Filled at $631.10 · realized +$5.82", time: "22m ago", txHash: "0x4b71…9de", icon: "payment", tone: "live" },
-      { title: "Refilled the buy ladder", detail: "12 levels armed between $598 and $624", time: "1h ago", txHash: "0x22cd…f04", icon: "grid-trading" },
-      { title: "Skipped a trade", detail: "Slippage above your 0.75% limit", time: "3h ago", icon: "revoke", tone: "danger" },
-    ],
-    statusLine: "12 buy levels armed · BNB/USDT" },
-  { id: "ladder-bnb", name: "Ladder BNB", categoryId: "grid", protocol: "PancakeSwap v3", tier: "verified", status: "live",
-    tagline: "Places a ladder of buy and sell orders around $BNB.",
-    metricValue: "+6.4%", metricTone: "profit", hiredCount: 128, price: "$9", priceUnit: "per month" },
-  { id: "range-pilot", name: "Range Pilot", categoryId: "lp", protocol: "PancakeSwap v3", tier: "verified", status: "live",
-    tagline: "Moves your liquidity back into range when the price drifts away.",
-    metricValue: "+$412 vs -$96 IL", metricTone: "profit", hiredCount: 96, price: "0.8%", priceUnit: "performance fee",
-    statusLine: "In range · $598 – $648 · rebalanced 2h ago" },
-  { id: "aegis-lp", name: "Aegis LP", categoryId: "lp", protocol: "PancakeSwap v3", tier: "registry", status: "paused", explainer: "compound",
-    tagline: "Collects fees earns and adds them back into the same position.",
-    metricValue: "+$180 vs -$40 IL", metricTone: "profit", hiredCount: 64, price: "1.0%", priceUnit: "performance fee" },
-  { id: "yield-router", name: "AI Stocks Trader", categoryId: "trading", protocol: "PancakeSwap v3", relatedProtocols: ["bstocks", "ondo"],
-    tier: "verified", status: "live", explainer: "trade", ...(agenticEnabled ? { custody: ["altana", "agentic-wallet"] } : {}),
-    tagline: "Screens tokenized US stocks and manages entries.",
-    metricValue: "14.2%", metricTone: "profit", hiredCount: 289, price: "10%", priceUnit: "of profit",
-    pair: "NVDAB / USDT", dailyCap: "500 USDT",
-    metrics: [
-      { label: "30d PnL", value: "+14.2%", tone: "profit", note: "net of fees" },
-      { label: "Trades / week", value: "48", note: "median 7 per day" },
-      { label: "Win rate", value: "64%", note: "38 trades" },
-      { label: "Fee", value: "10%", note: "of profit" },
-    ],
-    statusLine: "2 of 3 positions open · last entry 41m ago" },
-  { id: "vector-trader", name: "Tradfi Recurring Buy", categoryId: "trading", protocol: "PancakeSwap v3", relatedProtocols: ["bstocks", "ondo"],
-    tier: "verified", status: "live", explainer: "schedule", ...(agenticEnabled ? { custody: ["altana", "agentic-wallet"] } : {}),
-    tagline: "Buys a fixed amount of one tokenized stock on a set frequency.",
-    metricValue: "14.2%", metricTone: "profit", hiredCount: 156, price: "0 Fees", priceUnit: "this month" },
-  { id: "atlas-trader", name: "Auto DCA Agent", categoryId: "trading", protocol: "PancakeSwap v3", relatedProtocols: ["bstocks", "ondo"],
-    tier: "verified", status: "live", explainer: "dca", ...(agenticEnabled && agenticDcaEnabled ? { custody: ["altana", "agentic-wallet"] } : {}),
-    tagline: "Buys a fixed amount on a schedule, or on every dip.",
-    metricValue: "14.2%", metricTone: "profit", hiredCount: 203, price: "0 Fees", priceUnit: "this month" },
-  { id: "smart-portfolio", name: "Smart Portfolio Agent", categoryId: "trading", protocol: "PancakeSwap v3", relatedProtocols: ["bstocks", "ondo"],
-    tier: "verified", status: "live", explainer: "smart", ...(agenticEnabled ? { custody: ["altana", "agentic-wallet"] } : {}),
-    tagline: "Holds a weighted basket and rebalances back to target.",
-    metricValue: "14.2%", metricTone: "profit", hiredCount: 74, price: "0 Fees", priceUnit: "this month" },
-  // MARKETPLACE-LENDING-AGENT §2.3: the mock's "37 positions saved", 1204
-  // hires, "$8 per month" and "Repaying 240 USDT — health factor hit 1.18" were
-  // design chrome with no source. Rescues saved are not tracked as a catalogue
-  // metric, nobody has hired this yet (`LENDING_ENABLED` is off), and v1 charges
-  // no fee — so the card says each of those instead of inventing a number.
-  { id: "health-guard", name: "Health Guard", categoryId: "health", protocol: "Venus", tier: "verified", status: "live", explainer: "lending",
-    tagline: "Repays your debt from a reserve before liquidation.",
-    metricValue: "—", metricTone: "flat", metricLabel: "RESCUES (NOT TRACKED)", hiredCount: 0, price: "0 Fees", priceUnit: "this month" },
+  { id: "grid-keeper", name: "Grid Keeper", categoryId: "grid", protocol: "Rhea DCL", tier: "verified", status: "live",
+    tagline: "Limit-order grid on USDC / wNEAR, Rhea DCL.",
+    metricValue: "New", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDC / wNEAR", dailyCap: "1 to 2 NEAR" },
+  { id: "ladder-near", name: "Ladder NEAR", categoryId: "grid", protocol: "Rhea DCL", tier: "verified", status: "live", disabled: true,
+    tagline: "A buy and sell ladder around the NEAR price.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDt / wNEAR" },
+  { id: "range-pilot", name: "Range Pilot", categoryId: "lp", protocol: "Rhea DCL", tier: "verified", status: "live", disabled: false,
+    tagline: "Keeps your Rhea DCL range on the price.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDC / wNEAR" },
+  { id: "aegis-lp", name: "Aegis LP", categoryId: "lp", protocol: "Rhea DCL", tier: "verified", status: "live", explainer: "compound", disabled: true,
+    tagline: "Compounds your Rhea DCL fees back in.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDC / wNEAR" },
+  { id: "ai-token-trader", name: "AI Quant Trader", categoryId: "trading", protocol: "meme.cooking", tier: "verified", status: "live", explainer: "trade", disabled: false,
+    tagline: "Joins meme.cooking auctions on paper, AI-gated.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "paper only", pair: "Paper auctions. No real orders." },
+  { id: "recurring-buy", name: "Recurring Buy", categoryId: "trading", protocol: "Rhea", tier: "verified", status: "live", explainer: "schedule",
+    tagline: "Buys a fixed amount of a token on schedule.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month" },
+  { id: "auto-dca", name: "Auto DCA Agent", categoryId: "trading", protocol: "Rhea", tier: "verified", status: "live", explainer: "dca",
+    tagline: "Buys more on dips, sells at your target.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month" },
+  { id: "smart-portfolio", name: "Smart Portfolio", categoryId: "trading", protocol: "Rhea", tier: "coming-soon", status: "live", explainer: "smart", disabled: true,
+    tagline: "Holds a token basket at your target weights.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month" },
+  { id: "health-guard", name: "Health Guard", categoryId: "health", protocol: "Rhea Lend", tier: "coming-soon", status: "live", explainer: "lending", disabled: true,
+    tagline: "Repays your Rhea Lend debt before liquidation.",
+    metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month" },
 ];
 
-export const HIRED: HiredAgent[] = [
-  { id: "grid-keeper", value: "+$284.10", valueSub: "since 12 Jun", status: "live" },
-  { id: "health-guard", value: "+$0.00", valueTone: "flat", valueSub: "guarding $3,100", warning: true },
-  { id: "range-pilot", value: "-$18.20", valueSub: "14 d", status: "paused", statusLine: "Paused by you · position left in range" },
-];
+export const HIRED: HiredAgent[] = [];

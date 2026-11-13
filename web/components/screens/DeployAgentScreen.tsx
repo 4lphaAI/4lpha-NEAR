@@ -8,7 +8,7 @@
    The JSX body is unchanged; only the IIFE wrapper, the design-system
    namespace proxies and the window globals became real imports/exports. */
 import React from "react";
-import { Button, Checkbox, Icon, Input, SegmentedToggle, Select } from "@/design-system";
+import { Button, Checkbox, Icon, Input, SegmentedToggle, Select, TierBadge } from "@/design-system";
 import { agenticDcaEnabled, agenticEnabled } from "@/lib/agentic";
 const WORDS = [
   { word: "Trading", color: "var(--cat-yield)" },
@@ -18,33 +18,19 @@ const WORDS = [
 
 const KINDS = [
   { id: "grid", label: "Grid Agent", icon: "grid-trading", color: "var(--cat-grid)", tint: "var(--cat-grid-tint)",
-    venues: { demo: [{ label: "PancakeSwap", asset: "/design/protocols/pancakeswap.png" }], live: [{ label: "PancakeSwap", asset: "/design/protocols/pancakeswap.png" }] },
+    venues: { demo: [{ label: "Rhea DCL", asset: "/design/protocols/rhea.png" }], live: [{ label: "Rhea DCL", asset: "/design/protocols/rhea.png" }] },
     blurb: "Automated grid market making that buys low and sells high as market price moves.",
     simLabel: "Backtest window", simNote: "Replays the ladder against historical pair data before any capital moves." },
   { id: "trading", label: "Trading Agent", icon: "yield", color: "var(--cat-yield)", tint: "var(--cat-yield-tint)",
-    venues: { demo: [
-      { label: "Four.meme", asset: "/design/protocols/fourmeme.png" },
-      { label: "Flap.sh", asset: "/design/protocols/flapsh.png" },
-      { label: "bStocks", asset: "/design/protocols/bstocks.png" },
-      { label: "Uniswap", asset: "/design/protocols/uniswap.png" },
-      { label: "Ondo", asset: "/design/protocols/ondo.png" },
-      { label: "PancakeSwap", asset: "/design/protocols/pancakeswap.png" },
-    ], live: [
-      { label: "Four.meme", asset: "/design/protocols/fourmeme.png" },
-      { label: "Flap.sh", asset: "/design/protocols/flapsh.png" },
-      { label: "bStocks", asset: "/design/protocols/bstocks.png" },
-      { label: "Uniswap", asset: "/design/protocols/uniswap.png" },
-      { label: "Ondo", asset: "/design/protocols/ondo.png" },
-      { label: "PancakeSwap", asset: "/design/protocols/pancakeswap.png" },
-    ] },
-    blurb: "Screens eligible markets, sizes entries, and automatically manages buys & exits 24/7.",
+    venues: { demo: [{ label: "Rhea", asset: "/design/protocols/rhea.png" }], live: [{ label: "Rhea", asset: "/design/protocols/rhea.png" }] },
+    blurb: "Paper-trades meme.cooking auctions with an AI gate. No real orders, deposit or agent wallet.",
     simLabel: "Backtest window", simNote: "Replays the model against historical pair data before any capital moves." },
   { id: "lp", label: "LP Agent", icon: "lp-rebalance", color: "var(--cat-lp)", tint: "var(--cat-lp-tint)",
-    venues: { demo: [{ label: "PancakeSwap", asset: "/design/protocols/pancakeswap.png" }], live: [{ label: "PancakeSwap", asset: "/design/protocols/pancakeswap.png" }] },
+    venues: { demo: [{ label: "Rhea DCL", asset: "/design/protocols/rhea.png" }], live: [{ label: "Rhea DCL", asset: "/design/protocols/rhea.png" }] },
     blurb: "Routes liquidity to the best APR or fees with auto rebalance, compound & risk exits.",
     simLabel: "Backtest window", simNote: "Replays range, rebalance and fee behaviour over the selected pool history." },
-  { id: "health", label: "Lending Agent", icon: "health-shield", color: "var(--cat-health)", tint: "var(--cat-health-tint)",
-    venues: { demo: [{ label: "Venus", asset: "/design/protocols/venus.png" }], live: [{ label: "Venus", asset: "/design/protocols/venus.png" }] },
+  { id: "health", label: "Lending Agent", soon: true, icon: "health-shield", color: "var(--cat-health)", tint: "var(--cat-health-tint)",
+    venues: { demo: [{ label: "Rhea Lend", asset: "/design/protocols/rhea.png" }], live: [{ label: "Rhea Lend", asset: "/design/protocols/rhea.png" }] },
     blurb: "Monitors lending positions loan health and automatically repays before liquidation.",
     simLabel: "Stress window", simNote: "Replays the collateral drawdown of the window against your triggers." },
 ];
@@ -116,7 +102,7 @@ function DeployAgentSection({ go }) {
           <span>Deploy Your Agent to</span><RotatingWord />
         </h2>
         <p style={{ font: "var(--type-body-md)", color: "var(--text-muted)", maxWidth: "62ch" }}>
-          The Smart Money Era is here. Agents live 24/7 on-chain.
+          The era of <span style={{ color: "var(--brand)" }}>programmable money</span> starts here. Agents live 24/7.
         </p>
       </div>
 
@@ -129,9 +115,9 @@ function DeployAgentSection({ go }) {
                 <span style={{ width: 37, height: 37, borderRadius: "var(--radius-sm)", background: k.tint, color: k.color, display: "grid", placeItems: "center" }}>
                   <Icon name={k.icon} size={22} />
                 </span>
-                <span style={{ font: "var(--type-card-title)", color: "var(--ink-1)", fontSize: 18 }}>{k.label}</span>
+                <span style={{ font: "var(--type-card-title)", color: "var(--ink-1)", fontSize: 18, whiteSpace: "nowrap" }}>{k.label}</span>
               </span>
-              <span style={{ color: k.color, display: "grid", placeItems: "center" }}><Icon name="chevron-right" size={14} /></span>
+              {k.soon ? <TierBadge tier="coming-soon" /> : <span style={{ color: k.color, display: "grid", placeItems: "center" }}><Icon name="chevron-right" size={14} /></span>}
             </div>
             <p style={{ font: "var(--weight-regular) var(--text-sm)/var(--leading-normal) var(--font-sans)", color: "var(--text-muted)" }}>{k.blurb}</p>
             <span style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: "auto" }}>

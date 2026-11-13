@@ -22,12 +22,12 @@ export type DustRead =
 
 /** The hover text behind the tile's info icon. Plain language, no jargon. */
 export const DUST_EXPLAINER =
-  "Dust is the base and quote tokens left over in the agent wallet after a rebalance — "
-  + "what a swapless re-range, a skipped conversion or a rounding remainder hands back. "
-  + "It sits outside the position, so it earns no fees until the next rebalance picks it up. "
-  + "Native BNB is not counted here: that is the gas reserve, not dust.";
+  "Dust is the USDC and wNEAR left outside the position after it opens, rotates or compounds: "
+  + "the unused side and rounding remainders. "
+  + "It earns no fees until the next rotation or compound picks it up. "
+  + "Native NEAR is not counted here: that is the gas reserve, not dust.";
 
-/** Three decimals, as the operator asked — but a real balance never reads as "0". */
+/** Three decimals, as the operator asked, but a real balance never reads as "0". */
 export function formatTokenAmount(wei: bigint, decimals: number): string {
   const magnitude = wei < 0n ? -wei : wei;
   const text = formatAtomic(magnitude.toString(), decimals, 3);
@@ -45,7 +45,7 @@ export function dustMetric(input: {
   readonly symbol1: string;
 }): DetailMetric {
   const read = input.read;
-  if (read === undefined) return { value: null, reason: "agent wallet not read yet" };
+  if (read === undefined) return { value: null, reason: "not read yet" };
   if (read.kind === "unavailable") return { value: null, reason: read.reason };
   if (input.decimals0 === null || input.decimals1 === null) return { value: null, reason: "token decimals unavailable" };
   return {

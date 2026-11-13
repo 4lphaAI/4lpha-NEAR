@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# secrets and local config
+.env*
+!.env.example
+*.local
+
+# local state and scratch
+data/
+state/
+scripts/tmp/
+*.log

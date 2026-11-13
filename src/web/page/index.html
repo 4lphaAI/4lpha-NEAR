@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>4lpha NEAR</title>
+  <style>
+    :root { color-scheme: light; font: 16px/1.5 system-ui,sans-serif; color: #142a22; background: #f5f8f4; }
+    body { max-width: 48rem; margin: auto; padding: 1.5rem; }
+    h1, h2, h3 { line-height: 1.15; }
+    section, article { background: white; padding: 1.25rem; border: 1px solid #c8d9d0; border-radius: .75rem; margin: 1rem 0; }
+    button, input, select { font: inherit; padding: .4rem .65rem; margin: .2rem; border: 1px solid #557466; border-radius: .35rem; }
+    button { cursor: pointer; background: #164d3a; color: white; }
+    button:disabled { opacity: .6; cursor: wait; }
+    code, .wrap { overflow-wrap: anywhere; }
+    .warning { color: #8a2c08; font-weight: 600; }
+    .actions { display: flex; flex-wrap: wrap; gap: .25rem; }
+  </style>
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header><h1>4lpha NEAR</h1><p>Hire a Grid or LP agent on NEAR mainnet.</p></header>
+  <p id="message" role="status" aria-live="polite"></p>
+  <div id="account" class="actions"></div>
+  <section id="hire" hidden>
+    <h2>Hire an agent</h2>
+    <form id="hire-form">
+      <label>Agent <select id="kind" name="kind"><option value="grid">Grid</option><option id="lp-option" value="lp" hidden disabled>LP</option></select></label>
+      <label>Pair <select name="pair"><option value="usdc-wnear">USDC / wNEAR</option></select></label>
+      <label>Deposit (NEAR) <input id="deposit" name="deposit" type="text" value="0.4" inputmode="decimal" required></label>
+      <p id="grid-cost" hidden>Grid V1 deposit: 1 to 2 NEAR. Before funding, pay a separate 0.5 NEAR from your wallet for locked DCL registration. At this size the grid spread does not cover observed gas costs.</p>
+      <p id="lp-cost" hidden>LP V2 deposit: 1.2 to 3 NEAR. Before funding, pay a separate 0.5 NEAR from your wallet for locked DCL registration. The position uses your deposit minus 0.8 NEAR; the rest stays for gas and exit. Choose a price range or the server range (100 points each side). After two out-of-range checks at least 5 minutes apart, the agent may rotate, at most twice per rolling day. AI only suggests the next rotation range inside fixed bounds. A compound removes and rebuilds over the same range without a swap, at least 6 hours apart and only when fees meet both your threshold and 0.05 NEAR. Operations can wait for hourly or daily limits. At small sizes fees may not cover gas.</p>
+      <fieldset id="lp-settings" hidden>
+        <legend>LP settings</legend>
+        <label>Range <select id="lp-range"><option value="explicit">Choose prices</option><option value="server">Server (100 points each side)</option></select></label>
+        <label>Minimum USDC per NEAR <input id="lp-min" type="text" inputmode="decimal"></label>
+        <label>Maximum USDC per NEAR <input id="lp-max" type="text" inputmode="decimal"></label>
+        <label><input id="lp-ai" type="checkbox"> AI rotation suggestions</label>
+        <label><input id="lp-compound" type="checkbox" checked> Auto compound</label>
+        <label>Minimum fees (basis points, 100 = 1%) <input id="lp-fee" type="number" min="10" max="1000" step="1" value="100"></label>
+        <label>Stop loss (%) <input id="lp-sl" type="number" min="0" max="90" step="1" value="0"></label>
+        <label>Take profit (%) <input id="lp-tp" type="number" min="0" max="500" step="1" value="0"></label>
+        <p>Zero disables each protection threshold. Settings are your input through this session, bounded by the policy you sign; the settings themselves are not signed. Protection compares value in NEAR with your declared deposit using two finalized spot observations at least 5 minutes apart. A NEAR price rise lowers value measured in NEAR. Trades can move the DCL spot price, and tokens sent to the agent raise its value. A confirmed threshold stops and returns NEAR plus USDC. Gas, storage and the bootstrap swap reduce the measured value by roughly 1 to 2 percent at 1.2 NEAR before any price move; a stop loss below that fires on costs.</p>
+      </fieldset>
+      <p id="lp-risk" hidden>LP limits you should know. The wallet policy does not read the arguments of a contract call, so the agent key could also move a position through the exchange's transfer methods; the watchdog only notices afterwards, and the protection is key custody and your freeze. The open and every rebuild take no minimum amounts and can be sandwiched, initially up to 2.2 NEAR; later rebuilds reinvest the position and its fees. Between removal and deposit, USDC can sit in the wallet for a few operations. A job that cannot reserve its exit waits until the limit window rolls or you stop it. A payout of zero on one side is not yet seen on mainnet for a removal; if it differs from what is expected, the job halts and the exit sweeps the wallet.</p>
+      <p id="native-cap"></p>
+      <p>The policy allows calls to the wNEAR and USDC contracts and transfers to your account. The policy caps native NEAR. Token transfers through contract calls are protected by key custody, the watchdog and your ability to freeze the wallet.</p>
+      <p>Alerts appear on this page. The server handles the management link in memory when you reveal it. Save it privately so you can recover the wallet without 4lpha.</p>
+      <p>Keep 0.1 NEAR in your own wallet for a freeze. Storing the policy locks a deposit and burns gas (about 0.0164 NEAR total). Keep at least 0.117631 NEAR free at that step. Start with your deposit plus at least 0.123525 NEAR. Creating the account and registering tokens also cost NEAR; network gas and account creation fees do not come back.</p>
+      <p>A 0.4 NEAR hire that stops without trading costs about 0.040101 NEAR. The agent keeps a small gas and storage balance. Your own token registration belongs to you. The job returns the remaining NEAR and USDC to your account.</p>
+      <button id="hire-button" type="submit">Prepare hire</button>
+    </form>
+  </section>
+  <div id="jobs"></div>
+</body>
+</html>

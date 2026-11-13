@@ -84,6 +84,19 @@ export function toChartSeriesData(rows: Candle[]): ChartSeriesData {
   };
 }
 
+/** Snaps each marker to the last loaded candle at or before it. A marker before the first candle, or at or after one candle step past the last, is dropped. */
+export function snapMarkers<M extends { timestamp: number }>(candles: readonly Candle[], markers: readonly M[]): M[] {
+  if (candles.length === 0) return [];
+  const first = candles[0]!.timestamp, last = candles[candles.length - 1]!.timestamp;
+  const step = candles.length > 1 ? (last - first) / (candles.length - 1) : 1;
+  return markers.flatMap((marker) => {
+    if (marker.timestamp < first || marker.timestamp >= last + step) return [];
+    let bucket = candles[0]!;
+    for (const candle of candles) { if (candle.timestamp <= marker.timestamp) bucket = candle; else break; }
+    return [{ ...marker, timestamp: bucket.timestamp }];
+  }).sort((a, b) => a.timestamp - b.timestamp);
+}
+
 function parseCandle(value: unknown): Candle | null {
   if (!isRecord(value)) return null;
   const timestamp = finiteNumber(value["timestamp"]);
@@ -91,7 +104,8 @@ function parseCandle(value: unknown): Candle | null {
   const high = finiteNumber(value["high"]);
   const low = finiteNumber(value["low"]);
   const close = finiteNumber(value["close"]);
-  const volume = finiteNumber(value["volume"]);
+  // The NEAR data plane samples chain state and has no volume: null is zero here.
+  const volume = value["volume"] === null ? 0 : finiteNumber(value["volume"]);
   if (
     timestamp === null ||
     open === null ||

@@ -60,7 +60,7 @@ const STEPS3 = [{
   l: "ADD"
 }];
 function CompoundExplainer({
-  pair = "BNB / USDT",
+  pair = "USDC / wNEAR",
   protocol = "Thena",
   /** The LP deploy form shows the chart and the facts only. */
   compact = false
@@ -124,12 +124,12 @@ function CompoundExplainer({
   const FILLS = [{
     t: CLEAR_AT,
     tone: "warn",
-    text: "Unclaimed fees 0.0020 BNB",
+    text: "Unclaimed fees 0.58 wNEAR",
     sub: "floor cleared · compound queued"
   }, {
     t: RUN_AT + 1000,
     tone: "lp",
-    text: "Compounded 0.0021 BNB",
+    text: "Compounded 0.60 wNEAR",
     sub: "same range · liquidity +1.4%"
   }];
   const pulse = FILLS.find(f => e >= f.t && e < f.t + 650);
@@ -404,7 +404,7 @@ function CompoundExplainer({
       background: i === sceneIdx ? "var(--brand)" : "var(--line-2)",
       transition: "background .3s ease"
     }
-  }))), /*#__PURE__*/React.createElement("div", {
+  }))), /* NEAR: the sample-parameter strip is hidden in the compact deploy-form view. */ compact ? null : /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid var(--line-1)",
       padding: "14px 20px",
@@ -414,7 +414,7 @@ function CompoundExplainer({
       font: "var(--type-mono-xs)",
       color: "var(--text-subtle)"
     }
-  }, /*#__PURE__*/React.createElement("span", null, "FEE FLOOR 0.002 BNB"), /*#__PURE__*/React.createElement("span", null, "NEVER MOVES YOUR RANGE"), /*#__PURE__*/React.createElement("span", null, "PAUSES WHILE OUT OF RANGE")));
+  }, /*#__PURE__*/React.createElement("span", null, "FEE FLOOR 0.58 wNEAR"), /*#__PURE__*/React.createElement("span", null, "NEVER MOVES YOUR RANGE"), /*#__PURE__*/React.createElement("span", null, "PAUSES WHILE OUT OF RANGE")));
 }
 
 export { CompoundExplainer };

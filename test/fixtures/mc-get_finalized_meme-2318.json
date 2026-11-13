@@ -1,0 +1,1 @@
+{"jsonrpc":"2.0","result":{"block_hash":"4o2FojsSbTGLb3u8E7sPEbinEdzKu9PhViaXwka5AHsm","block_height":223924467,"error":"wasm execution failed with error: HostError(GuestPanic { panic_msg: \"No value found for the given key\" })","logs":[]},"id":1}

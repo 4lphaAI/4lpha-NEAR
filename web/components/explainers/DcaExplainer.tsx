@@ -5,11 +5,11 @@ import React from "react";
 /* TradFi · Auto DCA explainer. Mirrors the deploy form's `dca` section: one bStock, total budget,
    buy trigger (interval / price drop / both), amount per cycle, extra buy on drop below the last fill,
    take profit + stop loss from the average cost, sell style, restart after take-profit. */
-const TOKEN = "SPCXB";
+const TOKEN = "RHEA";
 const PER = 100, BUDGET = 1000, TP = 25, SL = 30, DIP = 5;
 const SCENES = [
-  { t: 0, title: "You pick one bStock, a budget and a buy trigger", body: "100 USDT of " + TOKEN + " every day from a 1,000 USDT budget. The trigger can be a fixed interval, a price drop, or both." },
-  { t: 1200, title: "It buys a fixed amount every cycle", body: "Each cycle spends the same USDT inside your slippage cap, so more tokens come in when the price is lower." },
+  { t: 0, title: "You pick one token, a budget and a buy trigger", body: "100 USDC of " + TOKEN + " every day from a 1,000 USDC budget. The trigger can be a fixed interval, a price drop, or both." },
+  { t: 1200, title: "It buys a fixed amount every cycle", body: "Each cycle spends the same USDC inside your slippage cap, so more tokens come in when the price is lower." },
   { t: 3050, title: "A drop below the last fill adds an extra buy", body: "When price falls 5% under the last fill, it adds one cycle right away instead of waiting for the next interval." },
   { t: 4700, title: "Your average cost sets the exit lines", body: "Take profit sits 25% above your average cost and the stop 30% below it. Both lines move with every new buy." },
   { t: 8100, title: "Take profit sells the position", body: "All at once, or in 4 tranches if you chose scale-out. The fill, the fees and the net result go in your log." },
@@ -36,7 +36,7 @@ const yP = (p) => 214 - (p - 86) * (170 / 44);
 const YELLOW = "var(--cat-yield)";
 const mono = { font: "var(--type-mono-xs)" };
 
-function DcaExplainer({ protocol = "PancakeSwap v3" }) {
+function DcaExplainer({ protocol = "Rhea" }) {
   const [e, setE] = React.useState(0);
   const [playing, setPlaying] = React.useState(true);
   const st = React.useRef({ e: 0, last: 0, playing: true });
@@ -77,9 +77,9 @@ function DcaExplainer({ protocol = "PancakeSwap v3" }) {
   const hx = xT(et), hy = yP(priceAt(et));
 
   const FEED = [
-    ...BUYS.map((b, i) => ({ t: b.t, tone: b.kind === "dip" ? "y" : "ok", text: b.kind === "dip" ? `Extra buy on −${DIP}% drop` : `Cycle ${i + 1 - (i > 2 ? 1 : 0)} · bought`, sub: `${PER} USDT at ${b.p.toFixed(2)} · ${(PER / b.p).toFixed(4)} ${TOKEN}` })),
-    { t: SELL_AT, tone: "ok", text: `Take profit · sold ${c1Tokens.toFixed(4)} ${TOKEN}`, sub: `${proceeds.toFixed(0)} USDT back · +${TP}% on ${c1Avg.toFixed(2)} avg` },
-    { t: RESTART_AT, tone: "y", text: "Schedule restarted", sub: `cycle 1 · ${PER} USDT at ${RESTART.p.toFixed(2)}` },
+    ...BUYS.map((b, i) => ({ t: b.t, tone: b.kind === "dip" ? "y" : "ok", text: b.kind === "dip" ? `Extra buy on −${DIP}% drop` : `Cycle ${i + 1 - (i > 2 ? 1 : 0)} · bought`, sub: `${PER} USDC at ${b.p.toFixed(2)} · ${(PER / b.p).toFixed(4)} ${TOKEN}` })),
+    { t: SELL_AT, tone: "ok", text: `Take profit · sold ${c1Tokens.toFixed(4)} ${TOKEN}`, sub: `${proceeds.toFixed(0)} USDC back · +${TP}% on ${c1Avg.toFixed(2)} avg` },
+    { t: RESTART_AT, tone: "y", text: "Schedule restarted", sub: `cycle 1 · ${PER} USDC at ${RESTART.p.toFixed(2)}` },
   ];
   const feed = FEED.filter((f) => e >= f.t).slice(-2);
   const pulse = FEED.find((f) => e >= f.t && e < f.t + 600);
@@ -100,7 +100,7 @@ function DcaExplainer({ protocol = "PancakeSwap v3" }) {
 
       <div className="fl-explainer-visual" style={{ padding: "8px 12px 0" }}>
         <svg viewBox={`0 0 ${VW} ${VH}`} style={{ display: "block", width: "100%", height: "auto" }}>
-          <text x={X0} y={24} style={{ ...mono, fill: "var(--text-subtle)" }}>{TOKEN} / USDT</text>
+          <text x={X0} y={24} style={{ ...mono, fill: "var(--text-subtle)" }}>{TOKEN} / USDC</text>
 
           {BUYS.filter((b) => b.kind === "interval").concat([RESTART]).map((b) => (
             <line key={b.t} x1={xT(b.t)} x2={xT(b.t)} y1={40} y2={220} stroke="var(--line-1)" strokeDasharray="2 4" />
@@ -148,15 +148,15 @@ function DcaExplainer({ protocol = "PancakeSwap v3" }) {
           <text x={RX} y={70} style={{ ...mono, fill: "var(--text-muted)" }}>{TOKEN}</text>
 
           <text x={RX} y={102} style={{ ...mono, fill: "var(--text-subtle)" }}>AVERAGE COST</text>
-          <text x={RX} y={120} style={{ ...mono, fill: "var(--ink-1)" }}>{avg ? avg.toFixed(2) + " USDT" : "—"}</text>
+          <text x={RX} y={120} style={{ ...mono, fill: "var(--ink-1)" }}>{avg ? avg.toFixed(2) + " USDC" : "-"}</text>
 
           <text x={RX} y={152} style={{ ...mono, fill: "var(--text-subtle)" }}>BUDGET</text>
           <rect x={RX} y={162} width={190} height={8} rx="2" fill="var(--raised-3)" />
           <rect x={RX} y={162} width={190 * (spent / BUDGET)} height={8} rx="2" fill="var(--brand)" style={{ transition: "width .4s var(--ease-out)" }} />
-          <text x={RX} y={188} style={{ ...mono, fill: "var(--ink-1)" }}>{spent.toLocaleString("en-US")} / {BUDGET.toLocaleString("en-US")} USDT USED</text>
+          <text x={RX} y={188} style={{ ...mono, fill: "var(--ink-1)" }}>{spent.toLocaleString("en-US")} / {BUDGET.toLocaleString("en-US")} USDC USED</text>
 
           <text x={RX} y={220} style={{ ...mono, fill: "var(--text-subtle)" }}>EXIT</text>
-          <text x={RX} y={238} style={{ ...mono, fill: sold && !restarted ? "var(--profit)" : "var(--ink-1)" }}>{sold && !restarted ? `CLOSED · +${TP}% · ${proceeds.toFixed(0)} USDT` : avg ? `TP ${tpP.toFixed(2)} · STOP ${(avg * (1 - SL / 100)).toFixed(2)}` : `TP +${TP}% · STOP −${SL}%`}</text>
+          <text x={RX} y={238} style={{ ...mono, fill: sold && !restarted ? "var(--profit)" : "var(--ink-1)" }}>{sold && !restarted ? `CLOSED · +${TP}% · ${proceeds.toFixed(0)} USDC` : avg ? `TP ${tpP.toFixed(2)} · STOP ${(avg * (1 - SL / 100)).toFixed(2)}` : `TP +${TP}% · STOP −${SL}%`}</text>
           <text x={RX} y={256} style={{ ...mono, fill: "var(--text-subtle)" }}>{restarted ? "CYCLE 2 · RESTARTED" : "FROM YOUR AVERAGE COST"}</text>
         </svg>
       </div>
@@ -183,7 +183,7 @@ function DcaExplainer({ protocol = "PancakeSwap v3" }) {
       </div>
 
       <div style={{ borderTop: "1px solid var(--line-1)", padding: "14px 20px", display: "flex", gap: 24, flexWrap: "wrap", font: "var(--type-mono-xs)", color: "var(--text-subtle)" }}>
-        <span>BSTOCKS ONLY</span><span>INTERVAL · PRICE DROP · BOTH</span><span>TP / STOP FROM AVG COST</span><span>SELL ALL OR 4 TRANCHES</span><span>RESTART AFTER TP</span>
+        <span>RHEA TOKENS ONLY</span><span>INTERVAL · PRICE DROP · BOTH</span><span>TP / STOP FROM AVG COST</span><span>SELL ALL OR 4 TRANCHES</span><span>RESTART AFTER TP</span>
       </div>
     </section>
   );

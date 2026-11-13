@@ -12,7 +12,7 @@ import { useCardVisible } from "./useCardVisible";
 const SCENES = [{
   t: 0,
   title: "Your liquidity sits inside a price band",
-  body: "The capital you delegate becomes one position on PancakeSwap v3, quoting between a lower and an upper price you choose."
+  body: "The capital you delegate becomes one position on Rhea DCL, quoting between a lower and an upper price you choose."
 }, {
   t: 1600,
   title: "It earns fees only while the price is inside",
@@ -20,7 +20,7 @@ const SCENES = [{
 }, {
   t: 3300,
   title: "The price drifts out of the band",
-  body: "BNB trades above your upper bound. The position stops earning and is now sitting in one asset."
+  body: "NEAR trades above your upper bound. The position stops earning and is now sitting in one asset."
 }, {
   t: 4900,
   title: "It waits out your drift trigger",
@@ -55,8 +55,8 @@ const B1 = {
     hi: 644
   };
 function RangeExplainer({
-  pair = "BNB / USDT",
-  protocol = "PancakeSwap v3",
+  pair = "USDC / wNEAR",
+  protocol = "Rhea DCL",
   /** The LP deploy form shows the chart and the facts only. */
   compact = false
 }) {
@@ -120,12 +120,12 @@ function RangeExplainer({
   const FILLS = [{
     t: OUT_AT,
     tone: "warn",
-    text: "Out of range at $632.10",
+    text: "Out of range at $2.528",
     sub: "fees stopped accruing"
   }, {
     t: ROTATE_AT,
     tone: "band",
-    text: "Re-ranged to $624 – $644",
+    text: "Re-ranged to $2.496 to $2.576",
     sub: "collected $12.40 in fees · 1 rotation"
   }];
   const pulse = FILLS.find(f => e >= f.t && e < f.t + 650);
@@ -346,7 +346,7 @@ function RangeExplainer({
       background: i === sceneIdx ? "var(--brand)" : "var(--line-2)",
       transition: "background .3s ease"
     }
-  }))), /*#__PURE__*/React.createElement("div", {
+  }))), /* NEAR: the sample-parameter strip is hidden in the compact deploy-form view. */ compact ? null : /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid var(--line-1)",
       padding: "14px 20px",

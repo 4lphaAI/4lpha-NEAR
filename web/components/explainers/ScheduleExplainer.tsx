@@ -5,15 +5,15 @@ import React from "react";
 /* TradFi · Schedule buy explainer. Mirrors the worker cycle in TRADFI-SCHEDULE-BUY-SPEC §2:
    one bStock, fixed USDT per buy, one slot per interval, NAV-premium + market-hours gates
    postpone a slot (never made up), buy only, stop on the finish rule. */
-const TOKEN = "SPCXB";
+const TOKEN = "RHEA";
 const PER_BUY = 25, BUDGET = 150, LIMIT = 1.5;
 const SCENES = [
-  { t: 0, title: "You pick one bStock, an amount and a frequency", body: "25 USDT of " + TOKEN + ", daily, from a 150 USDT budget. No model picks tokens and there is no take-profit or stop-loss: it only buys." },
-  { t: 1300, title: "Each cycle starts with the NAV premium", body: "Before buying, it compares the venue price with the stock's NAV. A buy only goes ahead inside your premium limit, and never above +1.5%." },
+  { t: 0, title: "You pick one token, an amount and a frequency", body: "25 USDC of " + TOKEN + ", daily, from a 150 USDC budget. No model picks tokens and there is no take-profit or stop-loss: it only buys." },
+  { t: 1300, title: "Each cycle starts with a price check", body: "Before buying, it compares the Rhea price with a reference price. A buy only goes ahead inside your premium limit, and never above +1.5%." },
   { t: 2500, title: "Inside the limit, it buys your fixed amount", body: "It quotes the route, checks the premium again at the real fill size, and buys inside your slippage cap. One buy per cycle, never more." },
-  { t: 3650, title: "Outside it, that cycle is postponed", body: "Premium over your limit, or the US market closed with market hours only on: the buy is skipped for that period and not made up later. The schedule resumes at the next cycle." },
-  { t: 5950, title: "Every fill stays in your wallet", body: "Holdings accumulate in your passkey wallet. The agent never sells, and revoking it leaves the tokens where they are." },
-  { t: 9350, title: "It stops at your finish rule", body: "Budget spent, end date reached or number of runs done, whichever you chose. Any USDT too small for one more buy stays in your wallet." },
+  { t: 3650, title: "Outside it, that cycle is postponed", body: "Premium over your limit: the buy is skipped for that period and not made up later. The schedule resumes at the next interval." },
+  { t: 5950, title: "Every fill stays in your wallet", body: "Holdings accumulate in your agent wallet. The agent never sells, and revoking it leaves the tokens where they are." },
+  { t: 9350, title: "It stops at your finish rule", body: "Budget spent, end date reached or number of runs done, whichever you chose. Any USDC too small for one more buy stays in your wallet." },
 ];
 const T0 = 1400, STEP = 1150, TOTAL = 12000;
 /* premium % per cycle; kind: buy | premium | closed */
@@ -50,7 +50,7 @@ function headX(e) {
   return cx(0) + f * (cx(1) - cx(0));
 }
 
-function ScheduleExplainer({ protocol = "PancakeSwap v3" }) {
+function ScheduleExplainer({ protocol = "Rhea" }) {
   const [e, setE] = React.useState(0);
   const [playing, setPlaying] = React.useState(true);
   const st = React.useRef({ e: 0, last: 0, playing: true });
@@ -90,8 +90,8 @@ function ScheduleExplainer({ protocol = "PancakeSwap v3" }) {
 
   const FEED = [
     ...CYCLES.map((c) => c.kind === "buy"
-      ? { t: c.at, tone: "ok", text: `C${c.i + 1} · bought ${c.out.toFixed(4)} ${TOKEN}`, sub: `${PER_BUY} USDT · premium +${c.p.toFixed(2)}% · ${protocol}` }
-      : { t: c.at, tone: "y", text: `C${c.i + 1} · postponed`, sub: c.kind === "premium" ? `premium +${c.p.toFixed(2)}% over your ${LIMIT}% limit` : "US market closed · market hours only" }),
+      ? { t: c.at, tone: "ok", text: `C${c.i + 1} · bought ${c.out.toFixed(4)} ${TOKEN}`, sub: `${PER_BUY} USDC · premium +${c.p.toFixed(2)}% · ${protocol}` }
+      : { t: c.at, tone: "y", text: `C${c.i + 1} · postponed`, sub: c.kind === "premium" ? `premium +${c.p.toFixed(2)}% over your ${LIMIT}% limit` : "skipped this period" }),
     { t: FINISH_AT, tone: "ok", text: "Schedule finished", sub: `budget spent · ${buys.length} buys · ${held.toFixed(4)} ${TOKEN} held` },
   ];
   const feed = FEED.filter((f) => e >= f.t).slice(-3);
@@ -112,15 +112,15 @@ function ScheduleExplainer({ protocol = "PancakeSwap v3" }) {
 
       <div className="fl-explainer-visual" style={{ padding: "8px 12px 0" }}>
         <svg viewBox={`0 0 ${VW} ${VH}`} style={{ display: "block", width: "100%", height: "auto" }}>
-          <text x={X0} y={24} style={{ ...mono, fill: "var(--text-subtle)" }}>{TOKEN} · PREMIUM TO NAV</text>
+          <text x={X0} y={24} style={{ ...mono, fill: "var(--text-subtle)" }}>{TOKEN} · PREMIUM TO REFERENCE</text>
 
           <rect x={closedX - 27} y={40} width={54} height={172} rx="3" fill="var(--surface-sunken)" />
-          <text x={closedX} y={52} textAnchor="middle" style={{ ...mono, fill: "var(--text-subtle)" }}>US CLOSED</text>
+          <text x={closedX} y={52} textAnchor="middle" style={{ ...mono, fill: "var(--text-subtle)" }}>SKIPPED</text>
 
           <line x1={X0} x2={X1} y1={yP(LIMIT)} y2={yP(LIMIT)} stroke={YELLOW} strokeWidth="1.5" strokeDasharray="4 4" />
           <text x={X1 - 2} y={yP(LIMIT) - 6} textAnchor="end" style={{ ...mono, fill: YELLOW }}>MAX PREMIUM +{LIMIT}%</text>
           <line x1={X0} x2={X1} y1={yP(0)} y2={yP(0)} stroke="var(--line-3)" strokeWidth="1" />
-          <text x={X1 - 2} y={yP(0) + 14} textAnchor="end" style={{ ...mono, fill: "var(--text-subtle)" }}>NAV</text>
+          <text x={X1 - 2} y={yP(0) + 14} textAnchor="end" style={{ ...mono, fill: "var(--text-subtle)" }}>REF</text>
 
           <polyline points={pts.join(" ")} fill="none" stroke="var(--brand)" strokeWidth="1.8" strokeLinejoin="round" />
 
@@ -147,11 +147,11 @@ function ScheduleExplainer({ protocol = "PancakeSwap v3" }) {
               <g key={c.i}>
                 <rect x={cx(c.i) - 23} y={176} width={46} height={32} rx="4" fill={fill} stroke={stroke} strokeDasharray={judged && !buy ? "3 3" : undefined} />
                 <text x={cx(c.i)} y={189} textAnchor="middle" style={{ ...mono, fill: "var(--text-subtle)" }}>C{c.i + 1}</text>
-                <text x={cx(c.i)} y={202} textAnchor="middle" style={{ ...mono, fill: !judged ? "var(--ink-4)" : buy ? "var(--profit)" : YELLOW }}>{!judged ? "—" : buy ? "BUY" : "SKIP"}</text>
+                <text x={cx(c.i)} y={202} textAnchor="middle" style={{ ...mono, fill: !judged ? "var(--ink-4)" : buy ? "var(--profit)" : YELLOW }}>{!judged ? "-" : buy ? "BUY" : "SKIP"}</text>
               </g>
             );
           })}
-          <text x={X0} y={236} style={{ ...mono, fill: "var(--text-subtle)" }}>ONE CYCLE PER DAY · {PER_BUY} USDT PER BUY · A SKIPPED CYCLE IS NOT MADE UP</text>
+          <text x={X0} y={236} style={{ ...mono, fill: "var(--text-subtle)" }}>ONE CYCLE PER DAY · {PER_BUY} USDC PER BUY · A SKIPPED CYCLE IS NOT MADE UP</text>
 
           <line x1={RX - 12} x2={RX - 12} y1={14} y2={250} stroke="var(--line-1)" />
           <text x={RX} y={24} style={{ ...mono, fill: "var(--text-subtle)" }}>HOLDINGS</text>
@@ -161,13 +161,13 @@ function ScheduleExplainer({ protocol = "PancakeSwap v3" }) {
           <text x={RX} y={104} style={{ ...mono, fill: "var(--text-subtle)" }}>BUDGET</text>
           <rect x={RX} y={114} width={180} height={8} rx="2" fill="var(--raised-3)" />
           <rect x={RX} y={114} width={180 * (spent / BUDGET)} height={8} rx="2" fill="var(--brand)" style={{ transition: "width .4s var(--ease-out)" }} />
-          <text x={RX} y={140} style={{ ...mono, fill: "var(--ink-1)" }}>{spent} / {BUDGET} USDT SPENT</text>
+          <text x={RX} y={140} style={{ ...mono, fill: "var(--ink-1)" }}>{spent} / {BUDGET} USDC SPENT</text>
 
           <text x={RX} y={174} style={{ ...mono, fill: "var(--text-subtle)" }}>BUYS</text>
           <text x={RX} y={192} style={{ ...mono, fill: "var(--ink-1)" }}>{buys.length} OF {BUDGET / PER_BUY} DONE · {postponed} POSTPONED</text>
 
           <text x={RX} y={226} style={{ ...mono, fill: "var(--text-subtle)" }}>{finished ? "STATUS" : "NEXT BUY"}</text>
-          <text x={RX} y={244} style={{ ...mono, fill: finished ? "var(--profit)" : "var(--ink-1)" }}>{finished ? "FINISHED · BUDGET SPENT" : current ? `CYCLE ${current.i + 1} · ${current.i === 5 ? "MARKET CLOSED" : "DUE"}` : "CHECKING…"}</text>
+          <text x={RX} y={244} style={{ ...mono, fill: finished ? "var(--profit)" : "var(--ink-1)" }}>{finished ? "FINISHED · BUDGET SPENT" : current ? `CYCLE ${current.i + 1} · ${current.i === 5 ? "SKIPPED" : "DUE"}` : "CHECKING…"}</text>
           <text x={RX} y={272} style={{ ...mono, fill: "var(--text-subtle)" }}>SELLS · NEVER</text>
         </svg>
       </div>
@@ -194,7 +194,7 @@ function ScheduleExplainer({ protocol = "PancakeSwap v3" }) {
       </div>
 
       <div style={{ borderTop: "1px solid var(--line-1)", padding: "14px 20px", display: "flex", gap: 24, flexWrap: "wrap", font: "var(--type-mono-xs)", color: "var(--text-subtle)" }}>
-        <span>BSTOCKS ONLY</span><span>EVERY 1H – DAILY</span><span>MAX PREMIUM 0.5 – 1.5%</span><span>BUY ONLY · NO SELLS</span><span>7-DAY SESSION</span>
+        <span>RHEA TOKENS ONLY</span><span>EVERY 1H – DAILY</span><span>MAX PREMIUM 0.5 – 1.5%</span><span>BUY ONLY · NO SELLS</span><span>7-DAY SESSION</span>
       </div>
     </section>
   );

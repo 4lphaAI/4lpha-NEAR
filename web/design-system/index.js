@@ -534,6 +534,9 @@ function TierBadge({
   ...rest
 }) {
   const verified = tier === "verified";
+  if (tier === "coming-soon") return /*#__PURE__*/React.createElement("span", _extends({
+    className: "fl-tier fl-tier--soon"
+  }, rest), label || "Coming soon");
   return /*#__PURE__*/React.createElement("span", _extends({
     className: `fl-tier fl-tier--${verified ? "verified" : "registry"}`
   }, rest), /*#__PURE__*/React.createElement(__ds_scope.Icon, {
@@ -589,7 +592,7 @@ function ActivityRow({
     href: href || "#",
     target: "_blank",
     rel: "noreferrer",
-    title: "View on BscScan"
+    title: "View on NearBlocks"
   }, txHash, /*#__PURE__*/React.createElement(__ds_scope.Icon, {
     name: "external",
     size: 12
@@ -783,6 +786,9 @@ try { (() => {
 // The export read these off `window.__resources`; the same bytes ship from
 // `public/design/protocols/`, so the src is a plain URL (as in lib/logo.ts).
 const PROTOCOL_LOGOS = {
+  "Rhea DCL": "/design/protocols/rhea.png",
+  "Rhea": "/design/protocols/rhea.png",
+  "Rhea Lend": "/design/protocols/rhea.png",
   "Uniswap": "/design/protocols/uniswap.png",
   "Ondo": "/design/protocols/ondo.png",
   "uniswap": "/design/protocols/uniswap.png",
@@ -790,6 +796,7 @@ const PROTOCOL_LOGOS = {
   "PancakeSwap": "/design/protocols/pancakeswap.png",
   "Venus": "/design/protocols/venus.png",
   "Four.meme": "/design/protocols/fourmeme.png",
+  "meme.cooking": "/design/protocols/memecooking.png",
   "Flap.sh": "/design/protocols/flapsh.png",
   "bStocks": "/design/protocols/bstocks.png",
   "fourmeme": "/design/protocols/fourmeme.png",
@@ -890,20 +897,22 @@ function AgentCard({
       gap: "var(--space-3)"
     }
   }, /*#__PURE__*/React.createElement(__ds_scope.TierBadge, {
-    tier: "verified"
+    tier: tier === "coming-soon" ? "coming-soon" : "verified"
   }))), /*#__PURE__*/React.createElement("p", {
     className: "fl-card__tagline"
   }, tagline), /*#__PURE__*/React.createElement("div", {
     className: "fl-card__spec"
   }, /*#__PURE__*/React.createElement("span", {
     className: "fl-card__spec-group"
-  }, [protocol, ...(venues || []), ...(relatedProtocols || [])].filter(Boolean).map(v => __ds_scope.PROTOCOL_LOGOS[v] ? /*#__PURE__*/React.createElement("img", {
-    key: v,
+  }, [protocol, ...(venues || []), ...(relatedProtocols || [])].filter(Boolean).map(v => __ds_scope.PROTOCOL_LOGOS[v] ? /*#__PURE__*/React.createElement(React.Fragment, {
+    key: v
+  }, /*#__PURE__*/React.createElement("img", {
     src: __ds_scope.PROTOCOL_LOGOS[v],
-    alt: PROTOCOL_NAMES[v] || v,
-    title: PROTOCOL_NAMES[v] || v,
+    alt: "",
     className: "fl-card__spec-logo"
-  }) : /*#__PURE__*/React.createElement("span", {
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "fl-card__spec-item"
+  }, PROTOCOL_NAMES[v] || v)) : /*#__PURE__*/React.createElement("span", {
     key: v,
     className: "fl-card__spec-item"
   }, v))), /*#__PURE__*/React.createElement("span", {
@@ -921,10 +930,10 @@ function AgentCard({
     key: c,
     className: "fl-card__spec-item"
   }, /*#__PURE__*/React.createElement("img", {
-    src: "/design/altana.png",
+    src: "/design/outlayer.png",
     alt: "",
     className: "fl-card__spec-logo fl-card__spec-logo--square"
-  }), "Altana")))), /*#__PURE__*/React.createElement("div", {
+  }), "OutLayer")))), /*#__PURE__*/React.createElement("div", {
     className: "fl-card__foot"
   }, /*#__PURE__*/React.createElement("div", {
     className: "fl-card__price"

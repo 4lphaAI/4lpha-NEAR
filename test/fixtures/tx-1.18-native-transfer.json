@@ -1,0 +1,97 @@
+{
+  "final_execution_status": "FINAL",
+  "status": {
+    "SuccessValue": ""
+  },
+  "transaction": {
+    "signer_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "receiver_id": "owner.near",
+    "hash": "synthetic-1",
+    "actions": [
+      {
+        "Transfer": {
+          "deposit": "10000000000000000000000"
+        }
+      }
+    ]
+  },
+  "transaction_outcome": {
+    "id": "synthetic-1",
+    "block_hash": "synthetic-2",
+    "outcome": {
+      "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "status": {
+        "SuccessReceiptId": "synthetic-3"
+      },
+      "logs": [],
+      "receipt_ids": [
+        "synthetic-3"
+      ],
+      "tokens_burnt": "82494768750000000000"
+    }
+  },
+  "receipts_outcome": [
+    {
+      "id": "synthetic-3",
+      "block_hash": "synthetic-4",
+      "outcome": {
+        "executor_id": "owner.near",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [
+          "synthetic-5"
+        ],
+        "tokens_burnt": "752494768750000000000"
+      }
+    },
+    {
+      "id": "synthetic-5",
+      "block_hash": "synthetic-6",
+      "outcome": {
+        "executor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "status": {
+          "SuccessValue": ""
+        },
+        "logs": [],
+        "receipt_ids": [],
+        "tokens_burnt": "0"
+      }
+    }
+  ],
+  "receipts": [
+    {
+      "receipt_id": "synthetic-3",
+      "predecessor_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receiver_id": "owner.near",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "10000000000000000000000"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "receipt_id": "synthetic-5",
+      "predecessor_id": "system",
+      "receiver_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "receipt": {
+        "Action": {
+          "actions": [
+            {
+              "Transfer": {
+                "deposit": "6772452918750000000000"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

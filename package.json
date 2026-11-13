@@ -1,0 +1,33 @@
+{
+  "name": "4lpha-near",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.22.2"
+  },
+  "scripts": {
+    "ui:build": "node scripts/build-ui.mjs",
+    "ui:dev": "node scripts/build-ui.mjs --serve",
+    "ui:typecheck": "tsc -p web/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "attack-demo": "tsc -p tsconfig.json && node scripts/attack-demo.mjs",
+    "build": "tsc -p tsconfig.json && esbuild src/web/page/app.ts --bundle --format=esm --platform=browser --outfile=dist/web/app.js && npm run ui:build",
+    "test": "tsc -p tsconfig.json && node --test dist/test/amounts.test.js dist/test/errors.test.js dist/test/near-rpc.test.js dist/test/rpc-pacing.test.js dist/test/rpc-pacing-audit.test.js dist/test/config.test.js dist/test/receipts.test.js dist/test/outlayer.test.js dist/test/policy.test.js dist/test/rhea-classic.test.js dist/test/money-vectors.test.js dist/test/budget.test.js dist/test/secrets.test.js dist/test/auth.test.js dist/test/store.test.js dist/test/hire.test.js dist/test/ops.test.js dist/test/watchdog.test.js dist/test/rpc-wait-audit.test.js dist/test/web.test.js dist/test/web-env-audit.test.js dist/test/grid.test.js dist/test/lp.test.js dist/test/lp-v2.test.js dist/test/grid-v2.test.js dist/test/recover-near.test.js dist/test/attack-demo.test.js dist/test/meme.test.js dist/test/meme-audit.test.js dist/test/trade.test.js dist/test/demo.test.js && node scripts/test-ui.mjs"
+  },
+  "dependencies": {
+    "@hot-labs/near-connect": "0.11.4",
+    "lightweight-charts": "5.2.1",
+    "near-api-js": "7.3.1",
+    "react": "19.2.9",
+    "react-dom": "19.2.9",
+    "viem": "2.56.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "@types/react": "19.1.12",
+    "@types/react-dom": "19.1.9",
+    "esbuild": "0.28.2",
+    "typescript": "5.9.3"
+  }
+}

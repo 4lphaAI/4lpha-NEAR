@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { formatPrice, priceFromTick } from "@/lib/lp/range";
+import { relativeTime } from "@/lib/exec/agent-detail";
 export type LiquidityGeometry = {
   spacing: number; currentTick: number; currentTickAsOfMs: number;
   orientation: { quoteIsToken0: boolean; decimals0: number; decimals1: number; symbol0: string; symbol1: string };
@@ -30,7 +31,7 @@ export function displayOrientation(g: LiquidityGeometry) {
     quoteSymbol: quoteIsToken0 ? g.orientation.symbol0 : g.orientation.symbol1,
     baseSymbol: quoteIsToken0 ? g.orientation.symbol1 : g.orientation.symbol0 };
 }
-type ChartState = { readAtMs?: number; pool: string; window: number; bins: { tickLower: number; liquidity: number }[]; currentTick: number | null; blockNumber: string | null; truncated: boolean; error: string | null };
+type ChartState = { readAtMs?: number; pool: string; window: number; bins: { tickLower: number; liquidity: number }[]; currentTick: number | null; blockNumber: string | null; truncated: boolean; error: string | null; delayedSince?: number };
 const LIQUIDITY_ZOOM_LEVELS = [30, 60, 120, 250, 500, 1000];
 /** How often the live profile is re-read while the form is open. */
 const LIQUIDITY_REFRESH_MS = 30_000;
@@ -83,7 +84,7 @@ export function LiquidityChart({ poolAddress, geometry: input, range, legend, sh
     const load = async () => {
       try {
         const response = await fetch(`/api/pool-liquidity?address=${poolAddress}&window=${windowBins}`, { cache: "no-store" });
-        const payload = await response.json().catch(() => ({})) as { data?: { bins: { tickLower: number; liquidity: string }[]; currentTick: number; blockNumber: string; truncated?: boolean }; error?: { message?: string; code?: string } };
+        const payload = await response.json().catch(() => ({})) as { data?: { bins: { tickLower: number; liquidity: string }[]; currentTick: number; blockNumber: string; truncated?: boolean }; meta?: { staleness?: string; asOf?: number }; error?: { message?: string; code?: string } };
         if (cancelled) return;
         if (!response.ok || payload.data === undefined) {
           setState({ pool: poolAddress, window: windowBins, bins: [], currentTick: null, blockNumber: null, truncated: false, error: payload.error?.message ?? payload.error?.code ?? "The pool's liquidity profile is unavailable." });
@@ -103,6 +104,7 @@ export function LiquidityChart({ poolAddress, geometry: input, range, legend, sh
           blockNumber: String(payload.data.blockNumber),
           truncated: payload.data.truncated === true,
           error: null,
+          ...((payload.meta?.staleness === "stale" || payload.meta?.staleness === "dead") && Number.isSafeInteger(payload.meta.asOf) ? { delayedSince: payload.meta.asOf } : {}),
         });
       } catch {
         if (!cancelled) setState({ pool: poolAddress, window: windowBins, bins: [], currentTick: null, blockNumber: null, truncated: false, error: "The pool's liquidity profile is unavailable." });
@@ -180,7 +182,7 @@ export function LiquidityChart({ poolAddress, geometry: input, range, legend, sh
             }}>{geometry.display.quoteSymbol} per {geometry.display.baseSymbol} ⇄</button>}
         </span>
         <span>
-          {!geometry ? poolAddress ? "Price geometry unavailable" : "Select a pool" : current.error ? current.error : current.blockNumber === null ? <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><span className="fl-spin" aria-hidden="true" data-testid="lp-liquidity-spinner" />Reading the pool…</span> : `${range.mode === "live" || range.mode === "rungs" ? "live" : "pool snapshot"}${current.truncated ? " · edges truncated" : ""} · refreshes every 30 s`}
+          {!geometry ? poolAddress ? "Price geometry unavailable" : "Select a pool" : current.error ? current.error : current.blockNumber === null ? <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}><span className="fl-spin" aria-hidden="true" data-testid="lp-liquidity-spinner" />Reading the pool…</span> : current.delayedSince !== undefined ? `Delayed: last read ${relativeTime(current.delayedSince, Date.now()).text}${current.truncated ? " · edges truncated" : ""}` : `${range.mode === "live" || range.mode === "rungs" ? "live" : "pool snapshot"}${current.truncated ? " · edges truncated" : ""} · refreshes every 30 s`}
         </span>
       </div>
       {showSnapshot && current.blockNumber !== null ? <small style={{color:"var(--text-subtle)"}}>Pool snapshot · block {current.blockNumber} · read {current.readAtMs === undefined ? "time unavailable" : new Date(current.readAtMs).toLocaleTimeString()}</small> : null}

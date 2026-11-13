@@ -6,7 +6,6 @@ import React from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Button, Icon, Input } from "@/design-system";
 import { RESOURCES } from "@/lib/design-resources";
-import { TUTORIAL_PLAYLIST } from "@/lib/tutorials";
 
 function KitHeader({ route, go, search, onSearchChange }: {
   route: string;
@@ -15,7 +14,7 @@ function KitHeader({ route, go, search, onSearchChange }: {
   onSearchChange: (value: string) => void;
 }) {
   const [netOpen, setNetOpen] = React.useState(false);
-  const nav: Array<[string, string]> = [["/", "Marketplace"], ["/account", "Account"], ["/skills", "Skill"]];
+  const nav: Array<[string, string]> = [["/", "Marketplace"], ["/account", "Account"]];
   const isOn = (href: string) => route.startsWith(href) && (href !== "/" || route === "/");
   // `whiteSpace: nowrap` keeps a label and its external icon on one line: the
   // nav shares the header row with a flexible search field, so at 1280px the
@@ -35,8 +34,8 @@ function KitHeader({ route, go, search, onSearchChange }: {
         <span aria-disabled="true" title="Available after the hackathon"
           style={{ ...linkBase, color: "var(--text-disabled)", background: "transparent", cursor: "not-allowed" }}>List your agent</span>
         <a href="https://x.com/4lpha_agent" target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>X</a>
-        <a href="https://docs.4lpha.tech/" target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Docs<Icon name="external" size={12} /></a>
-        <a href={TUTORIAL_PLAYLIST} target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Tutorial<Icon name="external" size={12} /></a>
+        <a href="#" onClick={(e) => e.preventDefault()} className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Docs<Icon name="external" size={12} /></a>
+        <a href="#" onClick={(e) => e.preventDefault()} className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Tutorial<Icon name="external" size={12} /></a>
       </nav>
       <div className="fl-header-search" style={{ flex: 1, maxWidth: 320 }}>
         <Input
@@ -49,20 +48,20 @@ function KitHeader({ route, go, search, onSearchChange }: {
         />
       </div>
       <div className="fl-header-actions" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-        {/* Network selector. BNB Chain is the only network this plane serves, so
+        {/* Network selector. NEAR is the only network this plane serves, so
             the menu lists exactly one option — the design shows it rather than
             implying a choice the app does not have. */}
         <span style={{ position: "relative" }}>
           <button type="button" aria-haspopup="listbox" aria-expanded={netOpen} onClick={() => setNetOpen(!netOpen)} className="fl-netbtn">
-            <img src={RESOURCES.bnbChain} alt="" style={{ width: 16, height: 16, flex: "0 0 auto" }} />
-            <span>BNB CHAIN</span>
+            <img src={RESOURCES.nearChain} alt="" style={{ width: 16, height: 16, flex: "0 0 auto" }} />
+            <span>NEAR</span>
             <Icon name="chevron-down" size={14} />
           </button>
           {netOpen && (
             <ul role="listbox" className="fl-netmenu">
               <li role="option" aria-selected="true" className="fl-netmenu__opt">
-                <img src={RESOURCES.bnbChain} alt="" style={{ width: 16, height: 16, flex: "0 0 auto" }} />
-                <span>BNB CHAIN</span>
+                <img src={RESOURCES.nearChain} alt="" style={{ width: 16, height: 16, flex: "0 0 auto" }} />
+                <span>NEAR</span>
               </li>
             </ul>
           )}
