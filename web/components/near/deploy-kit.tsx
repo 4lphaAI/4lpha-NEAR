@@ -157,6 +157,53 @@ function ModeRows({ values, set, modes }) {
   );
 }
 
+/* NEAR: a dropdown whose button and options show the pair logos from `f.icons(value)`. Closes on a pick, an outside click or Escape. */
+function IconSelect({ f, value, onChange }) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    if (!open) return;
+    const away = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    const esc = (e) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", away); document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+  }, [open]);
+  const opts = f.options.map((o) => typeof o === "string" ? { value: o, label: o } : o);
+  const current = opts.find((o) => o.value === value) ?? opts[0];
+  const row = (o) => {
+    const pair = f.icons(o.value);
+    return <>{pair ? <PairIcons token0={pair[0]} token1={pair[1]} size={22} /> : null}<span>{o.label}</span></>;
+  };
+  const base = { display: "flex", alignItems: "center", gap: 10, width: "100%", textAlign: "left", font: "var(--type-body-md)", color: "var(--ink-1)", cursor: "pointer" };
+  return (
+    <div className="fl-field" ref={ref}>
+      <label className="fl-field__label">{f.label}</label>
+      <div style={{ position: "relative" }}>
+        <button type="button" aria-haspopup="listbox" aria-expanded={open} aria-label={f.label} disabled={!!f.disabled} onClick={() => setOpen(!open)}
+          style={{ ...base, height: "var(--control-h-lg)", padding: "0 34px 0 12px", border: `var(--border-width) solid ${open ? "var(--border-focus)" : "var(--border-control)"}`, borderRadius: "var(--radius-sm)", background: "var(--surface-input)" }}>
+          {current ? row(current) : null}
+          <span aria-hidden="true" style={{ position: "absolute", right: 14, color: "var(--text-subtle)", fontSize: 11 }}>▾</span>
+        </button>
+        {open ? (
+          <ul role="listbox" style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, right: 0, zIndex: 50, margin: 0, padding: 4, listStyle: "none", border: "var(--border-width) solid var(--line-2)", borderRadius: "var(--radius-sm)", background: "var(--raised)", boxShadow: "var(--shadow-pop)" }}>
+            {opts.map((o) => (
+              <li key={o.value} role="option" aria-selected={o.value === value}>
+                <button type="button" onClick={() => { onChange(o.value); setOpen(false); }}
+                  style={{ ...base, padding: "8px 10px", border: "none", borderRadius: "var(--radius-xs)", background: o.value === value ? "var(--raised-2)" : "transparent" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "var(--raised-2)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = o.value === value ? "var(--raised-2)" : "transparent"; }}>
+                  {row(o)}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+      {f.hint ? <span className="fl-field__hint">{f.hint}</span> : null}
+    </div>
+  );
+}
+
 function Field({ f, value, onChange, values, set, preset }) {
   if (f.type === "hidden") return null;
   if (f.type === "numToggle") {
@@ -197,20 +244,8 @@ function Field({ f, value, onChange, values, set, preset }) {
   if (f.type === "check") return <Checkbox checked={!!value} locked={!!f.disabled} title={f.tooltip} onChange={onChange}>{f.text}</Checkbox>;
   if (f.type === "select") {
     const options = f.options;
-    // NEAR: a select with `icons` draws the chosen pair's two logos inside the box, left of the label.
-    const pair = f.icons ? f.icons(value) : null;
-    if (pair) return (
-      <div className="fl-field">
-        <label className="fl-field__label">{f.label}</label>
-        <div style={{ position: "relative" }}>
-          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", display: "flex", pointerEvents: "none", zIndex: 1 }}>
-            <PairIcons token0={pair[0]} token1={pair[1]} size={22} />
-          </span>
-          <Select aria-label={f.label} value={value} options={options} disabled={!!f.disabled} style={{ paddingLeft: 52 }} onChange={(e) => onChange(e.target.value)} />
-        </div>
-        {f.hint ? <span className="fl-field__hint">{f.hint}</span> : null}
-      </div>
-    );
+    // NEAR: a select with `icons` is a custom list, so every option shows its pair's logos (a native <select> cannot draw images).
+    if (f.icons) return <IconSelect f={f} value={value} onChange={onChange} />;
     return <Select label={f.label} value={value} options={options} hint={f.hint} disabled={!!f.disabled} onChange={(e) => onChange(e.target.value)} />;
   }
   const locked = f.lockedByPreset && f.lockedByPreset.includes(preset);
