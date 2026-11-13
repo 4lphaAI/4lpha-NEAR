@@ -907,7 +907,7 @@ export function NearJobScreen({ jobId, go }: Props) {
           {shownSequences.length === 0 && <p style={{ font: "var(--type-mono-xs)", color: "var(--text-subtle)" }}>{sequences.length === 0 ? "No runs recorded yet." : `No ${runFilter.toLowerCase()} runs in this history.`}</p>}
         </div>
       </Panel>}
-    </> : job.kind === 'lp' ? <NearLpDetail view={view} detail={detail} liquidity={job.lp?.position?.liquidity ?? null} executionModel={job.lp?.settings ? 'LP V2' : 'LP V1 · 0.4 NEAR'} compound={job.lp?.settings && job.lp.settings !== 'invalid' ? { on: job.lp.settings.compound.on, count: job.lp.compounds?.count ?? 0, lastAt: job.lp.compounds?.lastAt ?? null } : null} details={<JobDetails job={job} />} />
+    </> : job.kind === 'lp' ? <NearLpDetail view={view} detail={detail} liquidity={job.lp?.position?.liquidity ?? null} executionModel={job.lp?.settings ? 'LP V2' : 'LP V1 · 0.4 NEAR'} rebalances={job.lp ? { count: job.lp.rotations, cap: 2 } : null} compound={job.lp?.settings && job.lp.settings !== 'invalid' ? { on: job.lp.settings.compound.on, count: job.lp.compounds?.count ?? 0, lastAt: job.lp.compounds?.lastAt ?? null } : null} details={<JobDetails job={job} />} />
       : job.trade ? <>
         <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
           <SegmentedToggle value={tab === "Details" ? "Details" : "Overview"} onChange={(value: string) => setTab(value as Tab)} options={["Overview", "Details"]} />

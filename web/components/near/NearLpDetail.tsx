@@ -8,7 +8,6 @@ import { relativeTime, sequenceOutcome, type AgentDetailView, type DetailMetric,
 import type { OnChainPosition, OnChainPositionRead } from "@/lib/altana/position-reader";
 import { formatAtomic } from "@/lib/exec/pairs";
 import { formatPrice, priceFromTick } from "@/lib/lp/range";
-import { DUST_EXPLAINER, dustMetric, type DustRead } from "@/lib/lp/dust";
 import { liveInRange, liveReadFor, liveValueMetric, type LivePricing } from "@/lib/lp/live";
 import { lpAccountingFees, matchingLpAccounting, type LpAccountingRead } from "@/lib/lp/accounting";
 import { nearRangeContains } from "@/lib/near-map";
@@ -54,7 +53,9 @@ export function lpSequenceLabel(sequence: RemoveSequence): string {
   return (sequence.kind ?? "lp") + " \u00b7 " + sequence.state;
 }
 
-type Props = { view: AgentDetailView | null; detail: UseAgentDetailResult; liquidity: string | null; executionModel: 'LP V2' | 'LP V1 · 0.4 NEAR'; compound: { on: boolean; count: number; lastAt: number | null } | null; details?: React.ReactNode };
+type Props = { view: AgentDetailView | null; detail: UseAgentDetailResult; liquidity: string | null; executionModel: 'LP V2' | 'LP V1 · 0.4 NEAR'; compound: { on: boolean; count: number; lastAt: number | null } | null; details?: React.ReactNode;
+  /** Automatic rebalances (rotations) in the rolling 24 hours, and the cap (LP_MAX_ROTATIONS). */
+  rebalances?: { count: number; cap: number } | null };
 const short = (v: string) => v.length < 14 ? v : `${v.slice(0, 6)}…${v.slice(-4)}`;
 const unavailable = (reason: string): DetailMetric => ({ value: null, reason });
 export function usdMetric(metric: DetailMetric): DetailMetric {
@@ -189,11 +190,6 @@ export function NearLpDetail(props: Props) {
   const aprMetric = lp?.feeApr ?? unavailable("Not tracked yet");
   const farmMetric: DetailMetric = { value: "Not farmed", reason: null, note: "The agent does not stake its position in a Rhea farm." };
   const chainReads: ReadonlyMap<string, OnChainPositionRead> = new Map();
-  const dust = dustMetric({
-    read: undefined,
-    decimals0: pool?.decimals0 ?? null, decimals1: pool?.decimals1 ?? null,
-    symbol0: pool?.symbol0 ?? "token0", symbol1: pool?.symbol1 ?? "token1"
-  });
   const pricing: LivePricing = {
     quoteIsToken0: pool?.quoteIsToken0 ?? false,
     decimals0: pool?.decimals0 ?? null, decimals1: pool?.decimals1 ?? null,
@@ -260,12 +256,13 @@ export function NearLpDetail(props: Props) {
         note={earnedFees.value === null || !earnedFees.tokenBreakdown ? undefined : twoPlaces(earnedFees.tokenBreakdown)}
         title={[earnedFees.tokenBreakdown, earnedFees.note ?? earnedFees.reason].filter(Boolean).join(" · ") || undefined} />
 
+      {/* Operator, 2026-11-13: the Dust tile is replaced by the automatic rebalance allowance of the rolling 24 hours. */}
       {sigma ? tile("Open positions", { value: view ? `${positions.filter(p => p.state !== "closed").length} / 1` : null, reason: view ? null : "positions unavailable" }) : <MetricTile
-        key="Dust"
-        label={<span style={{ display: "flex", alignItems: "center", gap: 6 }}>Dust <InfoHint text={DUST_EXPLAINER} /></span>}
-        title={dust.value === null ? dust.reason ?? "source unavailable" : dust.note}
-        value={<span style={{ font: "var(--weight-medium) var(--text-lg)/1.3 var(--font-mono)", overflowWrap: "anywhere" }}>{dust.value ?? "-"}</span>}
-        note={dust.value === null ? undefined : dust.note} />}
+        key="Auto rebalance"
+        label="Auto rebalance (24h)"
+        title="Automatic rebalances in the last 24 hours, against the daily limit."
+        value={props.rebalances ? `${props.rebalances.count} / ${props.rebalances.cap}` : "-"}
+        note={props.rebalances ? props.rebalances.count >= props.rebalances.cap ? "Limit reached" : `${props.rebalances.cap - props.rebalances.count} left` : undefined} />}
 
     </div>
 
