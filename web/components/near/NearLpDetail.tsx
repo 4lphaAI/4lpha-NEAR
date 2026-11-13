@@ -13,6 +13,18 @@ import { liveInRange, liveReadFor, liveValueMetric, type LivePricing } from "@/l
 import { lpAccountingFees, matchingLpAccounting, type LpAccountingRead } from "@/lib/lp/accounting";
 import { nearRangeContains } from "@/lib/near-map";
 import type { UseAgentDetailResult } from "./NearJobScreen";
+
+/** Every decimal amount in a display string cut to two places; a positive amount below 0.01 reads "<0.01". */
+export function twoPlaces(text: string): string {
+  return text.replace(/\d+\.\d+/g, m => { const n = Number(m); return n > 0 && n < 0.01 ? "<0.01" : n.toFixed(2); });
+}
+/** A DCL liquidity id ("<pool id>#<index>") split into its pool id and short index; the Rhea pool page takes the pool id with "|" as "@". */
+export function dclPositionRef(id: string | null): { short: string | null; poolUrl: string | null } {
+  if (!id) return { short: null, poolUrl: null };
+  const cut = id.lastIndexOf("#");
+  if (cut <= 0) return { short: id, poolUrl: null };
+  return { short: id.slice(cut + 1), poolUrl: `https://app.rhea.finance/poolV2/${id.slice(0, cut).replace(/\|/g, "@")}` };
+}
 export type RemoveSequence = {
   readonly sequenceId: string;
   readonly positionId?: string;
@@ -228,10 +240,14 @@ export function NearLpDetail(props: Props) {
     <div
       style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(175px,1fr))", gap: 12, marginBottom: 24 }}>
 
-      <MetricTile
-        label={<span style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>Delegated <SegmentedToggle className="fl-seg fl-seg--mini" options={["USD", "NEAR"]} value={unit} onChange={setUnit} /></span>}
-        title={limit.value === null ? limit.reason?.replace(/^—s*/u, "") ?? "source unavailable" : undefined}
-        value={delegated} />
+      {/* As the Grid page: the toggle floats in the tile's corner, so the label and the value keep the plain tile layout. */}
+      <span style={{ position: "relative", display: "grid" }}>
+        <MetricTile label="Delegated" value={delegated} style={{ height: "100%" }}
+          title={limit.value === null ? limit.reason?.replace(/^—s*/u, "") ?? "source unavailable" : undefined} />
+        <span style={{ position: "absolute", top: 14, right: 14 }}>
+          <SegmentedToggle className="fl-seg fl-seg--mini" options={[{ value: "USD", label: "USD" }, { value: "NEAR", label: "NEAR" }]} value={unit} onChange={setUnit} />
+        </span>
+      </span>
 
       {tile("Execution model", { value: props.executionModel, reason: null })}
 
@@ -239,9 +255,9 @@ export function NearLpDetail(props: Props) {
         delta={pnl.value === null ? undefined : pnl.note} deltaTone={pnlTone}
         title={pnl.value === null ? pnl.reason ?? undefined : undefined} />
 
-      <MetricTile label="Fees earned" value={earnedFees.value ?? "-"}
-        note={earnedFees.value === null ? undefined : earnedFees.tokenBreakdown}
-        title={earnedFees.note ?? earnedFees.reason ?? undefined} />
+      <MetricTile label="Fees earned" value={earnedFees.value === null ? "-" : twoPlaces(earnedFees.value)}
+        note={earnedFees.value === null || !earnedFees.tokenBreakdown ? undefined : twoPlaces(earnedFees.tokenBreakdown)}
+        title={[earnedFees.tokenBreakdown, earnedFees.note ?? earnedFees.reason].filter(Boolean).join(" · ") || undefined} />
 
       {sigma ? tile("Open positions", { value: view ? `${positions.filter(p => p.state !== "closed").length} / 1` : null, reason: view ? null : "positions unavailable" }) : <MetricTile
         key="Dust"
@@ -344,18 +360,22 @@ export function NearLpDetail(props: Props) {
             return <React.Fragment key={p.positionId}>
               <div role="row" className="fl-row" style={{ gridTemplateColumns: columns, alignItems: "center" }}>
 
-                <div role="cell">
+                <div role="cell" style={{ minWidth: 0, overflow: "hidden" }}>
                   {p.state === "closed" && p.token0 && p.token1 && (p.token0 !== pool?.token0 || p.token1 !== pool?.token1) ? <div>
                     {p.pair}
                   </div> : pool ? <>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                       <PairIcons token0={{ src: icons[pool.token0] ?? tokenLogo(pool.symbol0), symbol: pool.symbol0 }} token1={{ src: icons[pool.token1] ?? tokenLogo(pool.symbol1), symbol: pool.symbol1 }} />
-                      <strong>{pool.base ?? "?"}/{pool.quote ?? "?"}</strong>
+                      {dclPositionRef(shownTokenId).poolUrl
+                        ? <a href={dclPositionRef(shownTokenId).poolUrl!} target="_blank" rel="noreferrer" title="Open the pool on Rhea Finance"
+                          style={{ color: "inherit", fontWeight: 600, textDecoration: "underline", textUnderlineOffset: 3 }}>{pool.base ?? "?"}/{pool.quote ?? "?"}</a>
+                        : <strong>{pool.base ?? "?"}/{pool.quote ?? "?"}</strong>}
                       {p.state !== "closed" ? <StatusBadge pill title={lp?.currentTickReason ?? undefined}
                         status={inside === true ? "live" : inside === false ? "warning" : "paused"}
                         label={inside === true ? "In range" : inside === false ? "Out of range" : shownTokenId === null ? "Loading…" : "Last observed"} /> : null}
                     </div>
-                    <small style={{ color: "var(--text-subtle)" }}>{shownTokenId !== null ? <>#{shownTokenId}{p.tokenId === null ? "*" : ""}</> : "-"} · V3 · {pool.fee / 10000}%</small>
+                    <small title={shownTokenId ?? undefined} style={{ display: "block", color: "var(--text-subtle)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                      {shownTokenId !== null ? <>#{dclPositionRef(shownTokenId).short}{p.tokenId === null ? "*" : ""}</> : "-"} · DCL · {pool.fee / 10000}%</small>
                   </> : <MetricCell metric={unavailable(lp?.reason ?? "pool not recorded")} />}
                 </div>
 
