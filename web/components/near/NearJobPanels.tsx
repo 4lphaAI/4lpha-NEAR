@@ -7,6 +7,12 @@ import { fmt, priceUsdcPerNear, tokenAmount, tokenLogo, USDC, WNEAR, type Job } 
    the header into a readable tab; the funds table becomes cards). Display only: every value comes from the job view. */
 
 const short = (s: string | null) => (s === null ? "Unavailable" : s.length <= 16 ? s : `${s.slice(0, 8)}…${s.slice(-6)}`);
+/** An account shortened, underlined and linked to its NearBlocks page (operator, 2026-11-13). */
+function AccountLink({ account }: { readonly account: string | null }) {
+  if (account === null) return <span>{short(account)}</span>;
+  return <a href={`https://nearblocks.io/address/${encodeURIComponent(account)}`} target="_blank" rel="noreferrer" title={`${account} on NearBlocks`}
+    style={{ color: "inherit", textDecoration: "underline", textUnderlineOffset: 3 }}>{short(account)}</a>;
+}
 const near = (raw: string | null) => (raw === null ? null : fmt(raw).replace(" NEAR", ""));
 const usdc = (raw: string | null) => {
   if (raw === null || !/^\d+$/.test(raw)) return null;
@@ -48,7 +54,7 @@ export function FundsCards({ job, readOnly = false }: { readonly job: Job; reado
   return <section aria-label="Where your funds are" style={{ display: "grid", gap: 12, marginTop: 20 }}>
     <h2 style={{ font: "var(--weight-semibold) var(--text-md)/1.2 var(--font-sans)", color: "var(--ink-1)" }}>Where your funds are</h2>
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
-      <Card title="Agent wallet" sub={<span title={job.agentAccount ?? undefined}>{short(job.agentAccount)}</span>}>
+      <Card title="Agent wallet" sub={<AccountLink account={job.agentAccount} />}>
         <TokenRow symbol="NEAR" amount={near(job.agentBalance)} />
         <TokenRow symbol="wNEAR" amount={tokens ? near(tokens[WNEAR] ?? "0") : null} />
         {/* Trade V1: a trade wallet holds its own pinned token (USDC, RHEA or ZEC). */}
@@ -69,7 +75,7 @@ export function FundsCards({ job, readOnly = false }: { readonly job: Job; reado
         {lost.map(([t, raw]) => <TokenRow key={"l" + t} symbol={`${symbolOf(t)} lost-found`} amount={amountOf(t, raw)} warn />)}
       </Card> : null}
       {/* Public agent page (audit M-2): a visitor never sees the owner's wallet card. */}
-      {readOnly ? null : <Card title="Your wallet" sub={<span title={job.owner}>{short(job.owner)}</span>}>
+      {readOnly ? null : <Card title="Your wallet" sub={<AccountLink account={job.owner} />}>
         <TokenRow symbol="NEAR" amount={near(job.ownerBalance)} />
         <span style={SUB}>Keep at least 0.1 NEAR here for a freeze.</span>
       </Card>}
@@ -98,8 +104,8 @@ export function JobDetails({ job }: { readonly job: Job }) {
   const lps = lp?.settings && lp.settings !== "invalid" ? lp.settings : null;
   return <div style={{ display: "grid", gap: 24, padding: 20, border: "1px solid var(--border-card)", borderRadius: "var(--radius-md)", background: "var(--surface-card)" }}>
     <Section title="Wallets">
-      <Item label="Owner"><span title={job.owner}>{short(job.owner)}</span></Item>
-      <Item label="Agent wallet"><span title={job.agentAccount ?? undefined}>{short(job.agentAccount)}</span></Item>
+      <Item label="Owner"><AccountLink account={job.owner} /></Item>
+      <Item label="Agent wallet"><AccountLink account={job.agentAccount} /></Item>
       {job.grid || job.lp ? <Item label="DCL registration">0.5 NEAR paid from your wallet, locked by DCL</Item> : null}
     </Section>
     {grid ? <Section title="Grid">

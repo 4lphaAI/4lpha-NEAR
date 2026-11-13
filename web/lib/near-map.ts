@@ -334,6 +334,22 @@ const BASE_POOL = {
   token0: "", token1: "", fee: 100, wbnbIsToken0: true, baseAddress: null, quoteAddress: null, quoteUsd: 1,
 } as const;
 
+/**
+ * Fee APR of the open position (operator, 2026-11-13): its unclaimed fees over its estimated value, annualised from the time
+ * its add finished. Rhea's own pool APR needs its private indexer key, so this is computed from the position alone. Under one
+ * hour open it is too noisy to show.
+ */
+export function lpFeeApr(fees: readonly string[] | null, estimate: readonly string[] | null, openedAt: number | null, price: number | null, nowMs: number): DetailMetric {
+  if (!fees || !estimate || openedAt === null) return unavailable("fees, value or opening time unavailable");
+  const age = nowMs - openedAt;
+  if (!(age >= 3_600_000)) return unavailable("open for less than an hour");
+  const feesUsd = sum([usdMicros(USDC, fees[0] ?? "0", price), usdMicros(WNEAR, fees[1] ?? "0", price)]);
+  const valueUsd = sum([usdMicros(USDC, estimate[0] ?? "0", price), usdMicros(WNEAR, estimate[1] ?? "0", price)]);
+  if (feesUsd === null || valueUsd === null || valueUsd <= 0n) return unavailable("price unavailable");
+  const apr = Number(feesUsd) / Number(valueUsd) * (365 * 86_400_000 / age) * 100;
+  return { value: `${apr < 0.01 && apr > 0 ? "<0.01" : apr.toFixed(2)}%`, reason: null, note: "unclaimed fees over the position value, annualised since it opened" };
+}
+
 function lpView(job: Job, v: Valuation, nowMs: number): LpDetailView | null {
   const lp = job.lp;
   if (!lp) return null;
@@ -344,6 +360,7 @@ function lpView(job: Job, v: Valuation, nowMs: number): LpDetailView | null {
   const { pnl, percent } = pnlMetrics(job, lp.valueHigh, v.price);
   return {
     wbnbUsd: v.price,
+    feeApr: lpFeeApr(fees, lp.position?.estimate ?? null, lp.position?.openedAt ?? null, v.price, nowMs),
     feeMetric: fees === null ? unavailable("unclaimed fees unavailable")
       : { value: usdText(feesUsd), reason: feesUsd === null ? "price unavailable" : null, tokenBreakdown: `${asset(USDC, fees[0] ?? "0")} + ${asset(WNEAR, fees[1] ?? "0")}`, note: "unclaimed, collected with the next removal" },
     currentTickFresh: lp.point !== null,

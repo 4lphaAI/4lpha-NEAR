@@ -60,11 +60,10 @@ function signed(yocto: string | null): string {
   const n = BigInt(yocto);
   return `${n < 0n ? "-" : "+"}${fmt((n < 0n ? -n : n).toString())}`;
 }
-/** A price as its NEAR figure, with the unit (and the USDC inverse) as the small line under it. */
+/** A price as its NEAR figure. The small line under it was removed (operator, 2026-11-13). */
 function price(r: Ratio | null, t: TradeView): { value: string; note?: string } {
   if (r === null) return { value: "-" };
-  const { decimals, symbol } = t.pair;
-  return { value: `${ratioPrice(r, decimals)} NEAR`, note: `per ${symbol}${symbol === "USDC" ? ` · ${ratioPrice(r, decimals, true)} USDC per NEAR` : ""}` };
+  return { value: `${ratioPrice(r, t.pair.decimals)} NEAR` };
 }
 /** "in 5m 30s", "in 2h 05m 30s", "in 1d 03h 12m": seconds show under a day so the tick is visible. */
 function due(at: number | null, now: number): string {
@@ -263,7 +262,7 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
         <div className="fl-row" style={{ gridTemplateColumns: CYCLE_COLS, alignItems: "center", cursor: "default" }}>
           <span style={CELL}>{cycle > 0 ? cycle : "-"}{cycle > 0 && plannedBuys !== null ? <span style={{ color: "var(--text-subtle)" }}>{` / ${plannedBuys}`}</span> : null}</span>
           <span style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <Logo symbol={b.kind === "wrap" ? "wNEAR" : sym} size={26} />
+            {b.kind === "wrap" ? <Logo symbol="wNEAR" size={26} /> : <PairLogo symbol={sym} size={26} />}
             <span style={{ display: "grid", gap: 4 }}>
               <span style={{ font: "var(--weight-medium) var(--text-sm)/1 var(--font-sans)", color: "var(--ink-1)" }}>{b.kind === "wrap" ? "Wrap NEAR" : `${sym} / wNEAR`}</span>
               <span style={{ ...SUB, textTransform: "uppercase" }}>{b.kind === "wrap" ? "wrap.near" : `${b.side} · pool ${t.pair.poolId}`}</span>

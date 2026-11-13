@@ -185,8 +185,9 @@ export function NearLpDetail(props: Props) {
       spacing: pool.tickSpacing, currentTick: lp.currentTick, currentTickAsOfMs: lp.currentTickAsOfMs ?? 0,
       orientation: { quoteIsToken0: pool.quoteIsToken0 ?? false, decimals0: pool.decimals0, decimals1: pool.decimals1, symbol0: pool.symbol0, symbol1: pool.symbol1 }, display: { invert }
     } : null;
-  const aprMetric = unavailable("Not tracked yet");
-  const farmMetric = unavailable("Not tracked yet");
+  // Fee APR: the open position's own fees, annualised (near-map lpFeeApr). Farm APR: the agent never stakes its position in a Rhea farm.
+  const aprMetric = lp?.feeApr ?? unavailable("Not tracked yet");
+  const farmMetric: DetailMetric = { value: "Not farmed", reason: null, note: "The agent does not stake its position in a Rhea farm." };
   const chainReads: ReadonlyMap<string, OnChainPositionRead> = new Map();
   const dust = dustMetric({
     read: undefined,

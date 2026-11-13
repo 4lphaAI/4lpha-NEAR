@@ -30,7 +30,7 @@ export interface Job {
   lp: { available: boolean; enabled: boolean; issued: boolean; registered: boolean; canRegister: boolean; point: number | null; internal: Record<string, string>; lost: Record<string, string>;
     positions: number; ledger: { usdc: string; wnear: string; native: string; inUsdc: string; inWnear: string } | null; rotations: number; pending: { kind: string } | null;
     range: { left: number; right: number; leftPrice: number; rightPrice: number; inRange: boolean | null; outSince: number | null } | null;
-    position: { id: string; liquidity: string; paidX: string; paidY: string; fees: string[] | null; estimate: string[] | null } | null;
+    position: { id: string; liquidity: string; paidX: string; paidY: string; fees: string[] | null; openedAt?: number | null; estimate: string[] | null } | null;
     // LP V2 fields (present when the job is V2; app.ts post-V2 lines 7-9).
     settings?: LpSettingsView | 'invalid' | null; recentred?: boolean; initialPosition?: string; positionValue?: string | null; valueLow?: string | null; valueHigh?: string | null;
     lastDecision?: { at: number; verdict: string; code?: string; range: { left: number; right: number } } | null;

@@ -257,6 +257,8 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
           inRange: venue ? venue.point >= lpPosition.left && venue.point < lpPosition.right : null, outSince: lpState?.out?.since ?? null } : null,
         position: lpPosition ? { id: lpPosition.id, liquidity: lpPosition.liquidity, paidX: lpPosition.paidX, paidY: lpPosition.paidY,
           fees: listed ? [listed.feeX, listed.feeY] : null,
+          // Display only (fee APR): when the add that created this position finished.
+          openedAt: rows.find(o => o.kind === 'dcl_add' && o.verdict === 'success' && (() => { try { return record(record(JSON.parse(o.after ?? 'null'))?.dclProof)?.lptId === lpPosition.id; } catch { return false; } })())?.finishedAt ?? null,
           estimate: estimate ? [estimate[0].toString(), estimate[1].toString()] : null } : null } : null };
   }
 

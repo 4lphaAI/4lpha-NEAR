@@ -21,7 +21,7 @@ type Options = { enabled: boolean; ai: boolean; bounds: { perAuctionNear: [numbe
    style (icon, tooltip, corner tag), as the operator asked on 2026-11-12. */
 export type TradeModel = 'degen' | 'schedule' | 'dca';
 const MODES: readonly { id: string; label: string; icon: string; note: string; tag: string; tone: string; route?: string; live?: boolean }[] = [
-  { id: 'degen', label: 'Degen', icon: '/design/mode-ai.png', note: 'Paper trades meme.cooking auctions. Nothing is signed.', tag: 'Paper', tone: 'var(--text-muted)', route: '/deploy/trade' },
+  { id: 'degen', label: 'Degen', icon: '/design/mode-ai.png', note: 'Paper trades meme.cooking auctions. Nothing is signed.', tag: 'Paper', tone: 'var(--text-muted)', route: '/deploy/trade/degen' },
   { id: 'schedule', label: 'Schedule buy', icon: '/design/mode-sched.png', note: 'Buys a fixed amount of a token on a timer.', tag: 'Mainnet', tone: 'var(--warning)', route: '/deploy/trade/schedule', live: true },
   { id: 'dca', label: 'Auto DCA', icon: '/design/mode-dca.png', note: 'Buys a base order, then more on dips, and sells at your target.', tag: 'Mainnet', tone: 'var(--warning)', route: '/deploy/trade/dca', live: true },
   { id: 'smart', label: 'Smart Portfolio', icon: '/design/mode-smart.png', note: 'Holds a weighted basket and rebalances back to target.', tag: 'Coming soon', tone: 'var(--text-subtle)' },

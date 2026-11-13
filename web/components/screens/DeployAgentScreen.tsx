@@ -102,7 +102,8 @@ function DeployAgentSection({ go }) {
           <span>Deploy Your Agent to</span><RotatingWord />
         </h2>
         <p style={{ font: "var(--type-body-md)", color: "var(--text-muted)", maxWidth: "62ch" }}>
-          The era of <span style={{ color: "var(--brand)" }}>programmable money</span> starts here. Agents live 24/7.
+          {/* Operator, 2026-11-13: the phrase in the reference blue, bold. */}
+          The era of <span style={{ color: "#1f64c0", fontWeight: 700 }}>programmable money</span> starts here. Agents live 24/7.
         </p>
       </div>
 

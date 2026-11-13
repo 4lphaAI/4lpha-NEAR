@@ -278,6 +278,8 @@ export type LpDetailView = {
   readonly workerIntervalMs?: number;
   readonly wbnbUsd?: number | null;
   readonly feeMetric?: DetailMetric;
+  /** NEAR LP: the open position's unclaimed fees over its value, annualised from its opening time (display only). */
+  readonly feeApr?: DetailMetric;
   readonly currentTickFresh?: boolean;
   readonly latestPositionId?: string;
   readonly eligibleCandidates?: number;

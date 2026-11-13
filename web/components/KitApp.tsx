@@ -64,8 +64,9 @@ export function KitApp() {
   else if (route.startsWith("/meme/")) screen = <NearMemeScreen key={route} agentId={route.slice("/meme/".length)} go={go} />;
   else if (route.startsWith("/demo/")) screen = <NearDemoScreen key={route} agentId={route.slice("/demo/".length)} go={go} />;
   // Trade V1 section 14: the selected execution model lives in the route.
-  else if (route === "/deploy/trade" || route === "/deploy/trade/schedule" || route === "/deploy/trade/dca") screen = <NearTradeDeployScreen go={go}
-    model={route === "/deploy/trade/schedule" ? "schedule" : route === "/deploy/trade/dca" ? "dca" : "degen"} />;
+  // Operator, 2026-11-13: the Trading Agent tab opens Schedule buy; the Degen paper agent has its own route.
+  else if (route === "/deploy/trade" || route === "/deploy/trade/schedule" || route === "/deploy/trade/dca" || route === "/deploy/trade/degen") screen = <NearTradeDeployScreen go={go}
+    model={route === "/deploy/trade/degen" ? "degen" : route === "/deploy/trade/dca" ? "dca" : "schedule"} />;
   else if (route.startsWith("/account/")) screen = <NearJobScreen key={route.slice("/account/".length)} jobId={route.slice("/account/".length)} go={go} />;
   else if (route === "/deploy/grid" || route === "/deploy/lp") screen = <NearDeployScreen key={route} kind={route === "/deploy/lp" ? "lp" : "grid"} go={go} />;
   else if (route === "/account") screen = <NearAccountScreen go={go} />;
