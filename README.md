@@ -439,6 +439,8 @@ npm run build
 
 Configuration keys are listed in [`.env.example`](.env.example). Secrets belong in `.env.local`, which git ignores. Entry points after `npm run build`: `dist/src/web/server.js`, `dist/src/worker/main.js`, `dist/src/watchdog/main.js`, `dist/src/meme/main.js`, `dist/src/demo/main.js`, `dist/src/demo/seed.js`. **The worker with `FOURLPHA_WORKER_LIVE=1` and the web with `FOURLPHA_LIVE_HIRES=1` act on real funds.**
 
+Hosted deployment: [`Dockerfile`](Dockerfile) builds the stack and [`scripts/railway-start.mjs`](scripts/railway-start.mjs) runs the five processes in one container, because they share one SQLite database on one volume (mounted at `/data`). Set `FOURLPHA_WEB_ORIGIN` to the public origin and `FOURLPHA_WORKER_KEK` to 32 random bytes in base64. The RPC, NEAR AI and data plane keys are container variables that the launcher writes to `.env.local` at start. Live hires and the live worker stay off unless `FOURLPHA_LIVE_HIRES=1` and `FOURLPHA_WORKER_LIVE=1` are set.
+
 ---
 
 License: MIT, see [LICENSE](LICENSE). Third-party parts keep their own licenses: the npm dependencies and the IBM Plex fonts in `web/public/fonts/`.
