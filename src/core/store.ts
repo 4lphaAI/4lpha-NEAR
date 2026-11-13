@@ -13,7 +13,7 @@ import type { Caps, PolicyRules, StorePolicyPayload } from './policy.js';
 import type { TradeState } from './trade.js';
 import { MONEY } from './pins.js';
 import { TRADE_PAIRS } from './trade-pairs.js';
-import { parseTradeSettings, TRADE_LIFE_MS, type TradeSettings } from './trade-settings.js';
+import { parseTradeSettings, tradeLifeMs, type TradeSettings } from './trade-settings.js';
 import { MEME, type MemeAgent, type MemeAuction, type MemeLog, type MemePosition, type MemeSettings } from './meme-paper.js';
 import { rpcSchema, sqliteRpcCoordinator } from './rpc-pacing.js';
 import type { DemoAgent, DemoEndReason, DemoNext } from './demo-sim.js';
@@ -109,7 +109,7 @@ CREATE TABLE IF NOT EXISTS demo_agents (id TEXT PRIMARY KEY, owner TEXT NOT NULL
 CREATE TABLE IF NOT EXISTS demo_log (id TEXT PRIMARY KEY, agent_id TEXT NOT NULL, kind TEXT NOT NULL, at INT NOT NULL, data TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS demo_log_agent_at ON demo_log(agent_id,at);
 `;
-/** Demo mode D-1: visitor caps; seeds (operator showcase agents) skip them. Grid and LP run 7 days (seeds 14), the trade kinds the live 6-day life. */
+/** Demo mode D-1: visitor caps; seeds (operator showcase agents) skip them. Grid and LP run 7 days (seeds 14), the trade kinds their live life (Schedule buy 6 days, Auto DCA 30). */
 export const DEMO_LIMITS = { perOwner: 3, total: 100, day: 86_400_000 } as const;
 const DEMO_REASONS: readonly DemoEndReason[] = ['owner-stopped', 'operator-stopped', 'term-ended', 'stop-loss', 'take-profit', 'budget', 'runs', 'date', 'tp', 'sl', 'reserve'];
 const DEMO_ACTIVE = "('running','stopping')";
@@ -769,7 +769,7 @@ export class Store {
       if (i.seed === 0 && (Number(this.#one(`SELECT count(*) n FROM demo_agents WHERE state IN ${DEMO_ACTIVE} AND owner=?`, i.owner)?.n) >= DEMO_LIMITS.perOwner ||
         Number(this.#one(`SELECT count(*) n FROM demo_agents WHERE state IN ${DEMO_ACTIVE} AND seed=0`)?.n) >= DEMO_LIMITS.total)) throw new CoreError('limit_reached', 'Demo agent limit reached.');
       const id = randomUUID(), trade = i.kind === 'schedule' || i.kind === 'dca';
-      const ends = now + (trade ? TRADE_LIFE_MS : (i.seed === 1 ? 14 : 7) * DEMO_LIMITS.day);
+      const ends = now + (trade ? tradeLifeMs(i.kind) : (i.seed === 1 ? 14 : 7) * DEMO_LIMITS.day);
       this.#run("INSERT INTO demo_agents VALUES (?,?,?,?,'running',NULL,?,?,NULL,?,?,?,?,0)", id, i.owner, i.kind, i.pair, json(i.settings), i.depositYocto, i.seed, now, ends, now);
       return this.getDemoAgent(id)!;
     });

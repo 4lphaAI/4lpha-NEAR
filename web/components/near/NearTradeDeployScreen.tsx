@@ -50,7 +50,7 @@ export function hireText(model: 'schedule' | 'dca'): string[] {
       'Stop loss does not sell.'] : []),
     'Every end pays you NEAR plus the token.',
     'You choose these settings; the policy is signed.',
-    'The planned operating duration is 6 days. A recovery (a freeze, a halt, a disabled server, an unresolved transaction) can keep the funds in the agent wallet longer.',
+    `The planned operating duration is ${model === 'dca' ? 30 : 6} days. A recovery (a freeze, a halt, a disabled server, an unresolved transaction) can keep the funds in the agent wallet longer.`,
     'RHEA and ZEC swaps have not been run by this product before. The ZEC pool charges no fee, so its liquidity can leave at any time.',
   ];
 }

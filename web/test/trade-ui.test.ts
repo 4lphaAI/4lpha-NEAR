@@ -178,8 +178,8 @@ test('15.11 the USDC note, the DCA note and the hire text: no promise of an end 
   assert.doesNotMatch(dca + schedule, /at the latest/i);
   for (const part of [/too large for one sale/, /exceed the signed daily limit/, /holds less than the agent bought/, /ends without selling and returns the token/, /Stop loss does not sell/,
     /0\.4 NEAR reserve, which pays gas and comes back minus gas/, /key custody only/, /watchdog only alerts/, /NEAR plus the token/, /You choose these settings; the policy is signed/,
-    /planned operating duration is 6 days/, /keep the funds in the agent wallet longer/, /RHEA and ZEC swaps have not been run/, /ZEC pool charges no fee/]) assert.match(dca, part);
-  assert.doesNotMatch(schedule, /Take profit/);
+    /planned operating duration is 30 days/, /keep the funds in the agent wallet longer/, /RHEA and ZEC swaps have not been run/, /ZEC pool charges no fee/]) assert.match(dca, part);
+  assert.doesNotMatch(schedule, /Take profit/); assert.match(schedule, /planned operating duration is 6 days/);
   assert.equal(html.includes(EM_DASH), false);
 });
 

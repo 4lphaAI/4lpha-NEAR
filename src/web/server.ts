@@ -438,7 +438,7 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
           const ai = d.ai === true && Number(demoStore.meta(`demo_ai:${day}`) ?? '0') < 50;
           const spot = (poolId: number) => { const s = demoSamples(demoStore, poolId).at(-1); return s && s.at <= now() && now() - s.at < 120_000 ? { num: s.wnear, den: s.token } : null; };
           // `hire` has the shape of GET /api/hire/options, filled for the demo: no live hires, the live bounds, defaults and display text.
-          send(ok({ enabled: true, kinds: DEMO_KINDS, ai, limits: { perOwner: DEMO_LIMITS.perOwner, total: DEMO_LIMITS.total, termDays: { grid: 7, lp: 7, schedule: 6, dca: 6 } },
+          send(ok({ enabled: true, kinds: DEMO_KINDS, ai, limits: { perOwner: DEMO_LIMITS.perOwner, total: DEMO_LIMITS.total, termDays: { grid: 7, lp: 7, schedule: 6, dca: 30 } },
             hire: { kind: 'grid', pairs: PAIRS, liveEnabled: false, demo: true, gridV1: true, gridV2: true, lpV1: lpOn, dclStorage: DCL_STORAGE,
               lp: lpOn ? { minDeposit: LP_MIN_DEPOSIT, maxDeposit: 3n * YOCTO_PER_NEAR, point: demoPoint(), ai } : null,
               minDeposit: YOCTO_PER_NEAR, maxDeposit: MONEY.maxDeposit,

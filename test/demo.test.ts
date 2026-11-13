@@ -547,7 +547,8 @@ test('demo 8: store roles: the demo role is denied every write outside its own; 
   assert.throws(() => db.web.reserveDemoAi('2027-01-15', true), { code: 'forbidden' }, 'only the demo process reserves AI calls');
   const seed = demo.createDemoAgent({ ...grid, owner: 'operator', seed: 1 }, testNow);
   assert.equal(seed.endsAt - seed.createdAt, 14 * DAY);
-  assert.equal(demo.createDemoAgent({ kind: 'dca', pair: 'trade-usdc', settings: DCA, depositYocto: (tradePlan(DCA) + TRADE_RESERVE).toString(), owner: 'operator', seed: 1 }, testNow).endsAt - testNow, 6 * DAY);
+  assert.equal(demo.createDemoAgent({ kind: 'dca', pair: 'trade-usdc', settings: DCA, depositYocto: (tradePlan(DCA) + TRADE_RESERVE).toString(), owner: 'operator', seed: 1 }, testNow).endsAt - testNow, 30 * DAY);
+  assert.equal(demo.createDemoAgent({ kind: 'schedule', pair: 'trade-usdc', settings: SCHEDULE, depositYocto: (tradePlan(SCHEDULE) + TRADE_RESERVE).toString(), owner: 'operator', seed: 1 }, testNow).endsAt - testNow, 6 * DAY);
   // Caps: 3 per owner and 100 visitor agents in running or stopping; seeds are exempt.
   db.web.createDemoAgent({ ...grid, owner: hash(1), seed: 0 }, testNow); db.web.createDemoAgent({ ...grid, owner: hash(1), seed: 0 }, testNow);
   assert.throws(() => db.web.createDemoAgent({ ...grid, owner: hash(1), seed: 0 }, testNow), { code: 'limit_reached' });
@@ -611,7 +612,7 @@ test('demo 9: the API: flag, options, anonymous creation with a hashed cookie, v
   assert.equal((await api(t, { demo: false }).request('/api/demo/options')).body.error?.code, 'not_found');
   const h = api(t);
   const options = record((await h.request('/api/demo/options')).body.data)!;
-  assert.deepEqual([options.enabled, options.kinds, options.limits], [true, ['grid', 'lp', 'schedule', 'dca'], { perOwner: 3, total: 100, termDays: { grid: 7, lp: 7, schedule: 6, dca: 6 } }]);
+  assert.deepEqual([options.enabled, options.kinds, options.limits], [true, ['grid', 'lp', 'schedule', 'dca'], { perOwner: 3, total: 100, termDays: { grid: 7, lp: 7, schedule: 6, dca: 30 } }]);
   const hire = record(options.hire)!;
   const live = createHandler({ store: h.web, rpc: dummyRpc(), now: () => testNow, env: { host: '127.0.0.1', port: 8090, origin: ORIGIN, liveHires: true, gridV1: true, gridV2: true, lpV1: true, tradeV1: true } });
   h.web.putSession(tokenHash('s'.repeat(43)), owner, testNow, testNow + HOUR);

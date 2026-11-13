@@ -833,7 +833,9 @@ test('15.7b tick order: a wrap settled 1 s before the end never journals its swa
   fee.setFee(25);
   await fee.tick(f.id);
   assert.match(fee.job(f.id).reason!, /does not match its pin\. Pool fee changed\./);
-  fee.at(testNow + 6 * 86_400_000); await advanceJob(fee.d, f.id);
+  fee.at(testNow + 30 * 86_400_000 - 2 * MIN); await advanceJob(fee.d, f.id);
+  assert.notEqual(fee.state(f.id).done?.kind, 'life', 'AD-4: a DCA job runs past 6 days');
+  fee.at(testNow + 30 * 86_400_000); await advanceJob(fee.d, f.id);
   assert.equal(fee.state(f.id).done?.kind, 'life', 'a changed pool never keeps an expired job running');
   await until(fee, f.id, () => fee.job(f.id).state === 'stopped');
 });
@@ -1060,11 +1062,36 @@ test('15.10 view: before the policy is prepared endsAt is null and the ledger is
 // ---------------------------------------------------------------------------------------------------------------------
 
 test('AUDIT S-1 (M03): endsAt is one hour before valid_until when that binds first, else created + 6 days, else null', () => {
-  const at = (validUntil: number | null) => auditTradeEndsAt({ createdAt: testNow, payload: validUntil === null ? null : { args: { valid_until: validUntil } } } as unknown as Pick<Job, 'createdAt' | 'payload'>);
+  const at = (validUntil: number | null) => auditTradeEndsAt({ createdAt: testNow, payload: validUntil === null ? null : { args: { valid_until: validUntil } } } as unknown as Job);
   const soon = Math.floor(testNow / 1000) + 3 * 86_400;
   assert.equal(at(soon), soon * 1000 - 3_600_000, 'AD-4: valid_until x 1000 - 1 hour');
   assert.equal(at(Math.floor(testNow / 1000) + 30 * 86_400), testNow + 6 * 86_400_000);
   assert.equal(at(null), null);
+});
+
+test('AD-4 (2026-11-13): a DCA level buy on day 7 is planned, journaled and filled (the T-9 re-check uses the 30-day end)', async t => {
+  const h = setup(t, { kind: 'dca' }), { id } = await h.run();
+  h.history(); await buy(h, id);
+  assert.equal(h.state(id).fills, 1, 'the base buy');
+  await h.tick(id);
+  assert.equal(h.state(id).levels[0], 'armed');
+  h.at(testNow + 7 * 86_400_000); h.history();
+  h.setReserve(USDC, h.reserve(USDC) * 1000n / 985n);
+  await h.tick(id);
+  assert.equal(h.state(id).pending?.level, 1, 'the level fires on day 7');
+  await until(h, id, () => h.state(id).levels[0] === 'filled' || h.job(id).state !== 'running');
+  assert.equal(h.job(id).state, 'running');
+  assert.equal(h.state(id).fills, 2, 'a level filled after day 6');
+  assert.equal(rows(h, id, 'swap').length, 2, 'its swap was journaled');
+});
+
+test('AD-4 (2026-11-13): an Auto DCA job ends 30 days after creation, whatever valid_until says; Schedule buy keeps 6 days', () => {
+  const at = (kind: string, validUntil: number | null) => auditTradeEndsAt({ kind, createdAt: testNow, payload: validUntil === null ? null : { args: { valid_until: validUntil } } } as unknown as Job);
+  const week = Math.floor(testNow / 1000) + 7 * 86_400;
+  assert.equal(at('dca', week), testNow + 30 * 86_400_000, 'valid_until does not shorten a DCA job');
+  assert.equal(at('dca', null), testNow + 30 * 86_400_000, 'known before the policy payload');
+  assert.equal(at('schedule', week), testNow + 6 * 86_400_000);
+  assert.equal(at('schedule', Math.floor(testNow / 1000) + 3 * 86_400), (Math.floor(testNow / 1000) + 3 * 86_400) * 1000 - 3_600_000);
 });
 
 test('AUDIT S-2 (M05): the take-profit line rounds up', () => {

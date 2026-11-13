@@ -10,7 +10,7 @@ import { exitBudget, watchdogFresh, type GuardedOps, type OpKind } from './ops.j
 import { WNEAR } from './pins.js';
 import { readTradePool } from './rhea-classic.js';
 import { tradePair, TRADE_PAIRS, type TradePair } from './trade-pairs.js';
-import { ladderFactor, TRADE_LIFE_MS, tradePlan, type TradeSettings } from './trade-settings.js';
+import { DCA_LIFE_MS, ladderFactor, TRADE_LIFE_MS, tradePlan, type TradeSettings } from './trade-settings.js';
 // Demo mode spec section 2: pure trade rules moved byte-identical to trade-settings.ts; re-exported here so every import keeps working.
 export { levelNeed, medianWait, outGivenIn, tpLine } from './trade-settings.js';
 import { levelNeed, medianWait, outGivenIn, tpLine, type Sample } from './trade-settings.js';
@@ -54,19 +54,22 @@ const REASONS: Record<DoneKind, string> = {
   budget: 'Schedule finished: budget spent. Paying the owner.',
   runs: 'Schedule finished: all buys done. Paying the owner.',
   date: 'Schedule finished: end date reached. Paying the owner.',
-  life: 'The trade job reached its planned 6-day end. Paying the owner.',
+  life: 'The trade job reached its planned end. Paying the owner.',
   tp: 'Take profit sold the position. Paying the owner.',
   'tp-cap': 'Take profit reached, but the position is larger than one sale may carry. Stop and withdraw pays NEAR and the token.',
   'tp-short': 'Take profit reached, but the wallet holds less of the token than the agent bought. Stop and withdraw pays NEAR and the token.',
   sl: 'Stop loss confirmed. Nothing was sold. Paying the owner NEAR and the token.',
 };
 
-/** AD-4: null until the policy payload carries the signed valid_until. */
-export function tradeEndsAt(j: Pick<Job, 'createdAt' | 'payload'>): number | null {
+/** AD-4: Auto DCA ends 30 days after creation. valid_until only bounds when the policy signature may be filed (OutLayer
+ *  contract source, store_wallet_policy), so it does not shorten a DCA job. Schedule buy keeps its 6-day rule: null until
+ *  the policy payload carries the signed valid_until, then the earlier of 6 days and one hour before it. */
+export function tradeEndsAt(j: Pick<Job, 'createdAt' | 'payload' | 'kind'>): number | null {
+  if (j.kind === 'dca') return j.createdAt + DCA_LIFE_MS;
   const v = j.payload?.args.valid_until;
   return typeof v === 'number' ? Math.min(j.createdAt + TRADE_LIFE_MS, v * 1000 - 3_600_000) : null;
 }
-export const tradeDeadline = (j: Pick<Job, 'createdAt' | 'payload'>): number => tradeEndsAt(j) ?? j.createdAt + TRADE_LIFE_MS;
+export const tradeDeadline = (j: Pick<Job, 'createdAt' | 'payload' | 'kind'>): number => tradeEndsAt(j) ?? j.createdAt + TRADE_LIFE_MS;
 const big = (v: string) => BigInt(v);
 const slotAt = (s: Schedule, anchor: number, now: number) => Math.floor((now - anchor) / (s.intervalSec * 1000));
 

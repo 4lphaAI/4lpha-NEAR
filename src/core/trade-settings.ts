@@ -9,8 +9,11 @@ export type TradeSettings =
 
 /** AD-7: the deposit is the plan plus this reserve, which pays gas and the exit and comes back minus gas. */
 export const TRADE_RESERVE = 4n * N / 10n;
-/** AD-4: the planned operating life of a trade job. */
+/** AD-4: the planned operating life of a Schedule buy job (and the furthest date end). */
 export const TRADE_LIFE_MS = 6 * 86_400_000;
+/** AD-4 (operator, 2026-11-13): an Auto DCA job runs up to 30 days. */
+export const DCA_LIFE_MS = 30 * 86_400_000;
+export const tradeLifeMs = (kind: string): number => kind === 'dca' ? DCA_LIFE_MS : TRADE_LIFE_MS;
 export const TRADE_INTERVALS: readonly number[] = [3600, 14400, 28800, 43200, 86400];
 export const TRADE_BUY_MIN = N / 10n, TRADE_BUY_MAX = 24n * N / 100n, TRADE_BUDGET_MIN = N / 5n, TRADE_PLAN_MAX = 16n * N / 10n;
 export const TRADE_MAX_RUNS = 16;

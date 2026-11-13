@@ -13,7 +13,7 @@ const INTERVALS: Readonly<Record<number, string>> = { 3600: "1 hour", 14400: "4 
 export const REFUND_TEXT = "Price moved beyond 0.5 %. The wNEAR stays in the agent wallet and is used by the next buy.";
 const DONE: Readonly<Record<NonNullable<TradeView["done"]>["kind"], string>> = {
   budget: "Schedule finished: budget spent.", runs: "Schedule finished: all buys done.", date: "Schedule finished: end date reached.",
-  life: "The planned 6-day end was reached.", tp: "Take profit sold the position to NEAR.",
+  life: "The planned end was reached.", tp: "Take profit sold the position to NEAR.",
   "tp-cap": "Take profit was reached, but one sale could not carry the position within its limits. The job ended without selling and returns the token.",
   "tp-short": "Take profit was reached, but the wallet held less of the token than the agent bought. The job ended without selling and returns the token.",
   sl: "Stop loss confirmed. Nothing was sold; the job returns NEAR and the token.",
@@ -192,7 +192,7 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
   const avg = price(t.avgCost, t), spot = price(t.spot, t);
   const valueNow = t.value === null ? "-" : fmt(t.value);
   const pnlTone = t.pnl === null || BigInt(t.pnl) === 0n ? "normal" : BigInt(t.pnl) > 0n ? "profit" : "loss";
-  const planned = t.endsAt === null ? "Planned end: 6 days after hire (the exact time is set when the policy is prepared)." : `Planned end: ${new Date(t.endsAt).toLocaleString("en-US")}.`;
+  const planned = t.endsAt === null ? t.strategy === "dca" ? "Planned end: 30 days after hire." : "Planned end: 6 days after hire (the exact time is set when the policy is prepared)." : `Planned end: ${new Date(t.endsAt).toLocaleString("en-US")}.`;
   const chartButton = onChart ? <Button variant={showChart ? "secondary" : "ghost"} size="sm" icon={<Icon name="yield" size={14} />} onClick={onChart} style={{ marginLeft: "auto" }}>{showChart ? "Hide chart" : "Show chart"}</Button> : null;
 
   // The five tiles, as on the Grid and LP pages. The USDC pair's own pool price is the USD price of NEAR; the other pairs have none, so they stay in NEAR.
