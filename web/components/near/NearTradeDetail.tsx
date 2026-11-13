@@ -184,7 +184,8 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
   readonly showChart?: boolean; readonly onChart?: () => void; readonly chart?: React.ReactNode;
   readonly unit?: string; readonly onUnit?: (unit: string) => void; readonly now?: number;
 }) {
-  const t = job.trade;
+  // Gross PnL (operator, 2026-11-13): proceeds plus value against the NEAR spent, before the buy and sell gas.
+  const t = job.trade && { ...job.trade, pnl: job.trade.value === null ? null : (BigInt(job.trade.ledger.proceeds) + BigInt(job.trade.value) - BigInt(job.trade.ledger.spent)).toString() };
   if (!t) return null;
   const s = t.settings, l = t.ledger, sym = t.pair.symbol, dec = t.pair.decimals, held = (BigInt(l.bought) - BigInt(l.sold)).toString();
   const name = t.strategy === "schedule" ? "Schedule buy" : "Auto DCA";

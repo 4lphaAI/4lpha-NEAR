@@ -213,7 +213,7 @@ test('15.11 the detail renders a refunded buy, a skipped level and the order his
   const log = renderToStaticMarkup(React.createElement(NearTradeDetail, { job, tab: 'Order history' }));
   assert.ok(log.includes(REFUND_TEXT)); assert.match(log, /data-verdict="refunded"[^>]*border:1px solid var\(--warning\)/); assert.match(log, /data-verdict="unclear"[^>]*var\(--loss\)/);
   assert.match(html, /<span>skipped<\/span>/); assert.match(html, /<span>filled<\/span>/);
-  assert.match(html, /-0\.003300 NEAR/);
+  assert.match(html, /-0\.000700 NEAR/, 'gross PnL: before the buy and sell gas');
   assert.match(html, /NEAR per RHEA/); assert.doesNotMatch(html, /USDC per NEAR/);
   assert.equal(html.includes(EM_DASH), false);
   // Merge with master: the agent page's funds cards and Details tab name the trade token and no DCL registration; a halted trade job's Check and resume is disabled.

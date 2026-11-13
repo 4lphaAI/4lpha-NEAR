@@ -105,7 +105,9 @@ export function usdText(micros: bigint | null): string | null {
 export function pnlMetrics(job: Job, value: string | null | undefined, price: number | null): { pnl: DetailMetric; percent: DetailMetric } {
   const deposit = BigInt(job.depositYocto);
   if (value === null || value === undefined || deposit <= 0n) return { pnl: unavailable("value unavailable"), percent: unavailable("value unavailable") };
-  const delta = BigInt(value) - deposit, abs = delta < 0n ? -delta : delta, sign = delta < 0n ? "-" : delta > 0n ? "+" : "";
+  // Gross (operator, 2026-11-13): the network costs the agent wallet paid are added back.
+  const cost = job.networkCost && /^\d+$/.test(job.networkCost) ? BigInt(job.networkCost) : 0n;
+  const delta = BigInt(value) - deposit + cost, abs = delta < 0n ? -delta : delta, sign = delta < 0n ? "-" : delta > 0n ? "+" : "";
   const near = `${sign}${fmt(abs.toString())}`, usd = price === null ? null : usdText(usdMicros("native", abs.toString(), price)), pct = abs * 10000n / deposit;
   return {
     pnl: { value: usd === null ? near : `${sign}${usd}`, reason: null, rawWei: delta.toString(), bnb: near, ...(usd === null ? {} : { usd: `${sign}${usd}` }), note: PNL_NOTE },

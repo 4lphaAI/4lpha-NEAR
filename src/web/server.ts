@@ -177,6 +177,8 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
     }).sort((a, b) => b.at - a.at).slice(0, 50) : [];
     const compounds = rows.filter(o => o.kind === 'dcl_remove' && o.purpose === 'strategy' && o.verdict === 'success' && record(JSON.parse(o.request))?.lpReason === 'compound');
     const operations = rows.map(o => ({ id: o.id, kind: o.kind, verdict: o.verdict, state: o.state, txHash: o.txHash, message: o.message, createdAt: o.createdAt, finishedAt: o.finishedAt }));
+    // Display only (gross PnL, operator 2026-11-13): the gas the agent wallet burnt plus the token registrations it paid.
+    const networkCost = rows.reduce((n, o) => n + (o.gasBurnt ?? 0n) + ((o.kind === 'storage' || o.kind === 'storage_owner') && o.verdict === 'success' && o.code !== 'already_registered' ? MONEY.storageDeposit : 0n), 0n);
     const grid = job.gridV1 ? store.grid(job.id) : null, state = grid?.state, step = grid ? jobGridStep(store, job.id, state ?? null) : GRID_V1_STEP;
     const lp = job.lpV1 ? store.lp(job.id) : null, lpState = lp?.state, lpPosition = lpState?.position ?? null;
     const price = (point: number) => 10 ** 18 / 1.0001 ** point;
@@ -225,7 +227,7 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
     }
     const canRegister = (issued: boolean) => !!(dclEligible && dclEligible.storage === null && holdings?.native === 0n && Object.values(holdings.tokens).every(n => n === 0n) && !issued);
     return { id: job.id, owner: job.owner, kind: job.kind, pair: job.pair, mode: job.mode, state: job.state, reason: job.reason, name: job.name,
-      depositYocto: job.depositYocto, agentAccount: job.agentAccount, walletPubkey: job.walletPubkey,
+      depositYocto: job.depositYocto, networkCost, agentAccount: job.agentAccount, walletPubkey: job.walletPubkey,
       agentBalance: job.armedHash ? holdings?.native ?? null : account === undefined ? null : account?.amount ?? 0n,
       ownerBalance: owner === undefined ? null : spendableNear(owner, 0n), // Only a v2 payload that is still valid for at least 10 minutes can be signed (OutLayer contract change, 2026-11-10).
       payload: !waiting && job.state === 'policy_prepared' && typeof job.payload?.args.valid_until === 'number' && job.payload.args.valid_until * 1000 > now() + 600_000 ? job.payload : null,

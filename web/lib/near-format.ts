@@ -12,7 +12,7 @@ export interface JobOperation {
   createdAt: number; finishedAt: number | null;
 }
 export interface Job {
-  id: string; owner: string; kind: string; state: string; reason: string | null; depositYocto: string; agentAccount: string | null;
+  id: string; owner: string; kind: string; state: string; reason: string | null; depositYocto: string; networkCost?: string; agentAccount: string | null;
   walletPubkey: string | null; agentBalance: string | null; ownerBalance: string | null; payload: Payload | null;
   canReveal: boolean; linkDelivered: boolean; linkConfirmed: boolean; canFund: boolean; frozen: boolean | null;
   canStopEarly: boolean;
