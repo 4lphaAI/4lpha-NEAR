@@ -197,6 +197,20 @@ function Field({ f, value, onChange, values, set, preset }) {
   if (f.type === "check") return <Checkbox checked={!!value} locked={!!f.disabled} title={f.tooltip} onChange={onChange}>{f.text}</Checkbox>;
   if (f.type === "select") {
     const options = f.options;
+    // NEAR: a select with `icons` draws the chosen pair's two logos inside the box, left of the label.
+    const pair = f.icons ? f.icons(value) : null;
+    if (pair) return (
+      <div className="fl-field">
+        <label className="fl-field__label">{f.label}</label>
+        <div style={{ position: "relative" }}>
+          <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", display: "flex", pointerEvents: "none", zIndex: 1 }}>
+            <PairIcons token0={pair[0]} token1={pair[1]} size={22} />
+          </span>
+          <Select aria-label={f.label} value={value} options={options} disabled={!!f.disabled} style={{ paddingLeft: 52 }} onChange={(e) => onChange(e.target.value)} />
+        </div>
+        {f.hint ? <span className="fl-field__hint">{f.hint}</span> : null}
+      </div>
+    );
     return <Select label={f.label} value={value} options={options} hint={f.hint} disabled={!!f.disabled} onChange={(e) => onChange(e.target.value)} />;
   }
   const locked = f.lockedByPreset && f.lockedByPreset.includes(preset);

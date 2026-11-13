@@ -6,6 +6,8 @@ import { depositYocto, exactNear } from '@/lib/near-format';
 import type { TradeOptions } from '@/lib/near-actions';
 import { Group } from './deploy-kit';
 import { DEPLOY_TABS, LOCKED_TAB } from './deploy-tabs';
+/* Logos of the Trade V1 tokens; RHEA and ZEC are the icons from each token's on-chain ft_metadata. */
+const TOKEN_LOGO: Record<string, string> = { USDC: '/design/tokens/usdc.svg', RHEA: '/design/tokens/rhea.png', ZEC: '/design/tokens/zec.svg' };
 import type { NearHireRun } from './NearHireRun';
 
 // Every venue of the Trading agent on every tab (operator, 2026-11-12): Rhea pools and OutLayer wallets for the live models, meme.cooking and NEAR AI for Degen.
@@ -167,7 +169,11 @@ export function NearTradeDeployScreen({ go, model = 'degen' }: { go: (route: str
     : typeof live === 'string' ? live : nameBad ? 'Letters, digits, spaces and . _ - only, up to 40 characters.' : '';
   const liveDisabled = demoMode ? demoBusy : busy || logoutPending || runId !== null || (account !== null && (!hireOptions || liveReason !== '' || deposit === null));
   const pairs = trade?.pairs ?? [{ id: 'trade-usdc', symbol: 'USDC' }, { id: 'trade-rhea', symbol: 'RHEA' }, { id: 'trade-zec', symbol: 'ZEC' }];
-  const pairField = { k: 'pair', label: 'Token', type: 'select', options: pairs.map(p => ({ value: p.id, label: `${p.symbol} / wNEAR` })) };
+  const pairField = { k: 'pair', label: 'Token', type: 'select', options: pairs.map(p => ({ value: p.id, label: `${p.symbol} / wNEAR` })),
+    icons: (value: unknown) => {
+      const symbol = pairs.find(p => p.id === value)?.symbol ?? null;
+      return symbol === null ? null : [{ src: TOKEN_LOGO[symbol] ?? null, symbol }, { src: '/design/tokens/near.svg', symbol: 'wNEAR' }];
+    } };
   const levels = Number(form.levels), maxStep = trade?.bounds.dca.maxStepBps[levels - 1] ?? 3000;
   const chip = (on: boolean): React.CSSProperties => ({ cursor: 'pointer', padding: '8px 14px', borderRadius: 999, font: 'var(--weight-medium) var(--text-sm)/1 var(--font-sans)',
     color: on ? active.color : 'var(--text-subtle)', background: on ? active.tint : 'transparent', border: `1px solid ${on ? active.color : 'var(--line-1)'}` });
