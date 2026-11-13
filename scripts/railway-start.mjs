@@ -1,5 +1,5 @@
 // Container launcher (Railway or any Linux host): runs the five processes of the local stack in one container,
-// with the same per-process settings as scripts/start-near.ps1. One container, because the processes share one
+// with the same per-process settings as the local stack. One container, because the processes share one
 // SQLite database and Railway attaches a volume to one service only. Nothing here prints a setting value.
 //
 // Variables read here:
@@ -46,14 +46,14 @@ writeFileSync(join(root, '.env.local'), lines.length ? lines.join('\n') + '\n' :
 console.log(`Settings file: ${lines.length} keys written (${LOCAL_KEYS.filter(k => process.env[k]).join(', ') || 'none'}).`);
 
 // Every process starts from the container environment without the secrets and switches; each one then gets only what
-// start-near.ps1 gives it. Custom RPC overrides are cleared so the settings file decides, as on a local machine.
+// the local stack gives it. Custom RPC overrides are cleared so the settings file decides, as on a local machine.
 const STRIP = [...LOCAL_KEYS, 'FOURLPHA_WORKER_KEK', 'FOURLPHA_LIVE_HIRES', 'FOURLPHA_WORKER_LIVE', 'FOURLPHA_RPC_URLS', 'FOURLPHA_ARCHIVAL_RPC_URL',
   'FOURLPHA_DEMO', 'FOURLPHA_DEMO_DB_PATH', 'FOURLPHA_GRID_V1', 'FOURLPHA_GRID_V2', 'FOURLPHA_LP_V1', 'FOURLPHA_TRADE_V1', 'FOURLPHA_MEME_PAPER'];
 const base = Object.fromEntries(Object.entries(process.env).filter(([k]) => !STRIP.includes(k)));
 const shared = { ...base, FOURLPHA_DB_PATH: liveDb, FOURLPHA_WEB_HOST: '0.0.0.0', FOURLPHA_WEB_PORT: port, FOURLPHA_WEB_ORIGIN: origin,
   FOURLPHA_GRID_V1: '1', FOURLPHA_GRID_V2: '1', FOURLPHA_LP_V1: '1', FOURLPHA_TRADE_V1: '1', FOURLPHA_MEME_PAPER: '1' };
 
-// The Trade paper start id is read on every start (see start-near.ps1); without it the scan keeps its saved floor.
+// The Trade paper start id is read on every start; without it the scan keeps its saved floor.
 let fromId = '';
 try { fromId = execFileSync(process.execPath, [join(root, 'scripts', 'meme-start-id.mjs')], { cwd: root, timeout: 45_000, encoding: 'utf8' }).trim().split('\n')[0]; } catch { /* API unavailable */ }
 if (!/^\d+$/.test(fromId)) { fromId = ''; console.log('meme.cooking API unavailable: Trade paper keeps its saved start point.'); }

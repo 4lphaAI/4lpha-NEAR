@@ -64,7 +64,7 @@ The hire order is enforced by a state machine (`src/core/hire.ts`, tests in `tes
 | 10. Run | Grid: tokens rest in DCL limit orders owned by the agent account; a claim pays the agent wallet (on DCL 2.4.2 a NEAR-buying claim pays native NEAR, 1.41). LP: tokens sit in a DCL position owned by the agent account; a removal pays the agent wallet (1.43). Trade: the bought token sits in the agent wallet. | Agent wallet and DCL, all owned by the agent account. |
 | Freeze (any time) | The owner's wallet signs `freeze_wallet`. OutLayer then refuses every operation, withdrawals included (1.20). Orders and positions already in DCL stay there (seen for an LP position, 1.43). Unfreeze leaves the job paused until the owner signs Resume (1.37). | Unchanged, frozen in place. |
 | Stop and withdraw | The worker exits DCL, then transfers NEAR (in chunks under the per-transaction cap) and the other token to the owner (1.37, 1.43). | Back in the user's wallet; about 0.011 NEAR stays in the agent account (its storage and reserve). |
-| If 4lpha is gone | The owner uses the key in the management link with OutLayer's API and, for value inside DCL, the read-only helper [`scripts/dcl-status.mjs`](scripts/dcl-status.mjs), which prints each step's command (done on mainnet in 1.41). The link's page itself only sets policy (1.36). | Back in the user's wallet. |
+| If 4lpha is gone | The owner uses the key in the management link with OutLayer's API, including for value inside DCL (done on mainnet in 1.41). The link's page itself only sets policy (1.36). | Back in the user's wallet. |
 
 ---
 
@@ -120,13 +120,7 @@ See: `ℹ fail 0`. Test names map to the rules, for example "gate refusals send 
 
 The offline attack demo is one more command, `npm run attack-demo` (see [Attack demo](#attack-demo)). See: exit code 0 and a last line starting `Summary: 7 attacks, 7 stopped`.
 
-### 2. Start the demo (Windows, one click)
-
-Double-click `start-demo.cmd` in the repository root. It builds, opens two windows ("4lpha NEAR - Demo web" and "4lpha NEAR - Demo simulation") on the database `data\demo.db` and port 8091, and opens `http://127.0.0.1:8091/deploy/grid`.
-
-See: both windows print `RPC: public FastNEAR`. Any other `RPC:` label is a stop.
-
-### 2b. Start the demo (any OS, two terminals)
+### 2. Start the demo (two terminals)
 
 Terminal 1, the demo web:
 
@@ -177,7 +171,7 @@ TODO(operator): links to the showcase demo agents on the hosted demo, if one is 
 
 ### What a live run needs (operator only)
 
-`start-near.cmd` starts the live stack (watchdog, web with live hires, worker, meme paper process, demo simulation). It needs `.env.local` with a private RPC endpoint and moves real funds once a user hires and funds an agent. Judges do not need it; the mainnet runs are listed under [Mainnet evidence](#mainnet-evidence).
+The live stack is five processes (watchdog, web with live hires, worker, meme paper process, demo simulation; entry points under [Development](#development)). It needs `.env.local` with a private RPC endpoint and moves real funds once a user hires and funds an agent. Judges do not need it; the mainnet runs are listed under [Mainnet evidence](#mainnet-evidence).
 
 ---
 
@@ -401,8 +395,8 @@ flowchart TB
 - Lending is not in this submission. A lending guard needs to repay inside the user's own Rhea Lend account, and OutLayer's executor mode refuses every Rhea Lend call (ruling 2026-11-10).
 - No NEAR Intents, no Chain Signatures, no cross-chain settlement.
 - The React shell still carries unreachable code and some wording from the BNB Chain app it was copied from.
-- The stack runs locally (Windows launchers, plus the POSIX commands above) and as one hosted container at https://near.4lpha.tech (see Development). TODO(operator): how long the hosted instance stays up (until 2026-11-18, ideally 2026-11-25).
-- The offline suites run on Windows in development; the POSIX demo commands above were checked, the full `npm test` on Linux or macOS was not.
+- The stack runs locally (the commands above) and as one hosted container at https://near.4lpha.tech (see Development). TODO(operator): how long the hosted instance stays up (until 2026-11-18, ideally 2026-11-25).
+- The offline suites run on Windows in development; the demo commands above were checked, the full `npm test` on Linux or macOS was not.
 
 ---
 
