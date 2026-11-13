@@ -6,7 +6,7 @@
 
 Deposit NEAR, pick an agent and its limits, and it runs a Grid, a liquidity position (LP) or a buying plan on Rhea Finance around the clock. The agent signs through an OutLayer custody wallet. The wallet's policy lives on `outlayer.near` and belongs to the user's NEAR account: the user can freeze it at any time, and its caps and whitelist (the user and the pinned contracts) bound every direct NEAR payment. It does not look inside contract calls, so token value relies on key custody, a watchdog and the freeze ([Security](#security-what-the-agents-key-can-and-cannot-do)).
 
-TODO(operator): [Demo video](TODO) · [X demo post](TODO) · [Hosted demo](TODO) · [Try it with no funds](#try-it-with-no-funds) · [Mainnet evidence](#mainnet-evidence) · [Security](#security-what-the-agents-key-can-and-cannot-do)
+TODO(operator): [Demo video](TODO) · [X demo post](TODO) · [Hosted demo](https://near.4lpha.tech) · [Try it with no funds](#try-it-with-no-funds) · [Mainnet evidence](#mainnet-evidence) · [Security](#security-what-the-agents-key-can-and-cannot-do)
 
 <!-- TODO(operator): video thumbnail, for example <a href="VIDEO_URL"><img src="THUMBNAIL_URL" alt="Watch the 4lpha NEAR demo" width="480" /></a> -->
 
@@ -95,6 +95,9 @@ The site's FAQ points to the criteria of earlier NEAR hackathons: technical impl
 ## Try it with no funds
 
 No wallet, no key, no NEAR. Demo mode signs nothing, holds no wallet key and no OutLayer key, and reads public RPC only.
+
+Fastest path: open the hosted instance at https://near.4lpha.tech/deploy/grid (or `/deploy/lp`, `/deploy/trade`), keep **Demo** selected and press **Start demo agent**. See: the agent page opens with the banner "Simulated agent. No wallet, no deposit, nothing is signed." The steps below run the same thing locally.
+
 **Requirements:** Node.js 22.22.2 or newer (`node:sqlite`), npm, git. No `.env.local` is needed for the demo.
 
 ### 1. Build and run the offline tests
@@ -398,7 +401,7 @@ flowchart TB
 - Lending is not in this submission. A lending guard needs to repay inside the user's own Rhea Lend account, and OutLayer's executor mode refuses every Rhea Lend call (ruling 2026-11-10).
 - No NEAR Intents, no Chain Signatures, no cross-chain settlement.
 - The React shell still carries unreachable code and some wording from the BNB Chain app it was copied from.
-- The stack runs locally (Windows launchers, plus the POSIX commands above). TODO(operator): hosted demo URL and how long it stays up (until 2026-11-18, ideally 2026-11-25).
+- The stack runs locally (Windows launchers, plus the POSIX commands above) and as one hosted container at https://near.4lpha.tech (see Development). TODO(operator): how long the hosted instance stays up (until 2026-11-18, ideally 2026-11-25).
 - The offline suites run on Windows in development; the POSIX demo commands above were checked, the full `npm test` on Linux or macOS was not.
 
 ---
