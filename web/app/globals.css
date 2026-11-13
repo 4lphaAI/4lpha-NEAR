@@ -1115,6 +1115,8 @@ button { font: inherit; color: inherit; }
 .fl-netbtn:focus-visible{outline:none;border-color:var(--border-focus)}
 .fl-netmenu{position:absolute;top:calc(100% + var(--space-3));right:0;z-index:50;min-width:100%;margin:0;padding:var(--space-3);list-style:none;border:var(--border-width) solid var(--line-2);border-radius:var(--radius-sm);background:var(--raised);box-shadow:var(--shadow-pop)}
 .fl-netmenu__opt{display:flex;align-items:center;gap:var(--space-4);height:var(--control-h);padding:0 var(--space-5);white-space:nowrap;border-radius:var(--radius-xs);font:var(--type-metric-sm);color:var(--ink-1)}
+.fl-netmenu__link{text-decoration:none;color:var(--text-muted)}
+.fl-netmenu__link:hover{color:var(--ink-1);background:var(--raised-2)}
 .fl-navlink:hover{color:var(--ink-1)!important;background:var(--raised-2)}
 .fl-navlink--active:hover{color:var(--brand-hover)!important;background:var(--brand-tint)}
 .fl-eyebrow{font:var(--type-eyebrow);letter-spacing:var(--tracking-caps);text-transform:uppercase;color:var(--text-subtle)}

@@ -5,7 +5,7 @@ import { api } from '@/lib/near-wallet';
 import { depositYocto, exactNear } from '@/lib/near-format';
 import type { TradeOptions } from '@/lib/near-actions';
 import { Group } from './deploy-kit';
-import { DEPLOY_TABS } from './deploy-tabs';
+import { DEPLOY_TABS, LOCKED_TAB } from './deploy-tabs';
 import type { NearHireRun } from './NearHireRun';
 
 // Every venue of the Trading agent on every tab (operator, 2026-11-12): Rhea pools and OutLayer wallets for the live models, meme.cooking and NEAR AI for Degen.
@@ -234,6 +234,10 @@ export function NearTradeDeployScreen({ go, model = 'degen' }: { go: (route: str
           <Icon name={k.icon} size={13} />{k.label}
         </button>
       ))}
+      <span aria-disabled="true" title={LOCKED_TAB.title}
+        style={{ cursor: 'not-allowed', font: 'var(--weight-medium) var(--text-sm)/1 var(--font-sans)', color: 'var(--text-disabled)', background: 'transparent', border: '1px solid var(--line-1)', borderRadius: 999, padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 7 }}>
+        <Icon name={LOCKED_TAB.icon} size={13} />{LOCKED_TAB.label}
+      </span>
     </div>
 
     {model === 'degen' ? <form className="fl-deploy-form" style={{ border: '1px solid var(--border-card)', borderTop: `2px solid ${active.color}`, borderRadius: 'var(--radius-md)', background: 'var(--surface-card)', padding: 24 }} onSubmit={async event => {

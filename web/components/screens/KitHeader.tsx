@@ -34,7 +34,7 @@ function KitHeader({ route, go, search, onSearchChange }: {
         <span aria-disabled="true" title="Available after the hackathon"
           style={{ ...linkBase, color: "var(--text-disabled)", background: "transparent", cursor: "not-allowed" }}>List your agent</span>
         <a href="https://x.com/4lpha_agent" target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>X</a>
-        <a href="#" onClick={(e) => e.preventDefault()} className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Docs<Icon name="external" size={12} /></a>
+        <a href="https://docs.4lpha.tech/NEAR" target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Docs<Icon name="external" size={12} /></a>
         <a href="#" onClick={(e) => e.preventDefault()} className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Tutorial<Icon name="external" size={12} /></a>
       </nav>
       <div className="fl-header-search" style={{ flex: 1, maxWidth: 320 }}>
@@ -48,9 +48,8 @@ function KitHeader({ route, go, search, onSearchChange }: {
         />
       </div>
       <div className="fl-header-actions" style={{ display: "flex", alignItems: "center", gap: 8, marginLeft: "auto" }}>
-        {/* Network selector. NEAR is the only network this plane serves, so
-            the menu lists exactly one option — the design shows it rather than
-            implying a choice the app does not have. */}
+        {/* Network selector. NEAR is the network this app serves; BNB CHAIN
+            is a link to the BNB product at 4lpha.tech, not a network switch. */}
         <span style={{ position: "relative" }}>
           <button type="button" aria-haspopup="listbox" aria-expanded={netOpen} onClick={() => setNetOpen(!netOpen)} className="fl-netbtn">
             <img src={RESOURCES.nearChain} alt="" style={{ width: 16, height: 16, flex: "0 0 auto" }} />
@@ -62,6 +61,12 @@ function KitHeader({ route, go, search, onSearchChange }: {
               <li role="option" aria-selected="true" className="fl-netmenu__opt">
                 <img src={RESOURCES.nearChain} alt="" style={{ width: 16, height: 16, flex: "0 0 auto" }} />
                 <span>NEAR</span>
+              </li>
+              <li role="option" aria-selected="false">
+                <a href="https://4lpha.tech/" target="_blank" rel="noreferrer" className="fl-netmenu__opt fl-netmenu__link" onClick={() => setNetOpen(false)}>
+                  <img src={RESOURCES.bnbChain} alt="" style={{ width: 16, height: 16, flex: "0 0 auto" }} />
+                  <span>BNB CHAIN</span>
+                </a>
               </li>
             </ul>
           )}

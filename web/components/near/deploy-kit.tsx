@@ -127,11 +127,12 @@ function ModeRow({ m, values, set, exp, setExp }) {
       </div>
       {isExp ? (
         <div style={{ padding: "0 14px 14px", display: "grid", gap: 12 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
+          {/* NEAR: a mode with no fields (Auto-rebalance) shows only its explainer. */}
+          {typeof m.fields === "function" || m.fields.length ? <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
             {(typeof m.fields === "function" ? m.fields(values) : m.fields).map((f) => (
               <Field key={f.k} f={f} value={values[f.k]} onChange={(v) => set(f.k, v)} values={values} set={set} />
             ))}
-          </div>
+          </div> : null}
           {/* NEAR: the rotation re-centres on the price (the "Both ways"
               explainer); there is no swapless mode. */}
           {m.key === "rebalanceOn" ? <RangeExplainer compact /> : null}

@@ -5,8 +5,10 @@ import { depositYocto, exactNear } from '@/lib/near-format';
 import { applyLpPrefill, type GridForm, type HireOptions } from '@/lib/near-actions';
 import { applyGridPreset, gridFormFrom } from '@/lib/grid-form';
 import { api } from '@/lib/near-wallet';
+import { DCL_POOL_KEY, tickOf } from '@/lib/near-map';
+import { LiquidityChart, type LiquidityGeometry } from '@/components/lp/LiquidityChart';
 import { Group, PriceRangeBox, parsePrice } from './deploy-kit';
-import { DEPLOY_TABS } from './deploy-tabs';
+import { DEPLOY_TABS, LOCKED_TAB } from './deploy-tabs';
 import { NearHireRun } from './NearHireRun';
 
 /* The page frame is the BSC DeployAgentScreen render (header, agent tabs,
@@ -19,6 +21,8 @@ const KINDS = [
     blurb: 'Provides liquidity in your price range on one pinned pool, with automatic rotation, compound and risk exits.' },
 ] as const;
 const VENUES = [{ label: 'Rhea DCL', asset: '/design/protocols/rhea.png' }, { label: 'OutLayer', asset: '/design/outlayer.png' }];
+/* LP asks NEAR AI Cloud for a range at each rotation (fenced by code, deterministic fallback). */
+const LP_VENUES = [...VENUES, { label: 'NEAR AI', asset: '/design/protocols/near-white.svg' }];
 const POOL = { pair: 'USDC / wNEAR', addr: '17208628…33a1 | wrap.near', fee: '0.01%', c: 'var(--cat-grid)',
   tokens: [{ src: '/design/tokens/usdc.svg', symbol: 'USDC' }, { src: '/design/tokens/near.svg', symbol: 'wNEAR' }] };
 /* Spec 2c G2-1: the BNB product's four presets, labels and displayed gaps as in its Deploy page; `set` is its TP/SL prefill. */
@@ -36,15 +40,12 @@ const GRID_EXIT = { title: 'Exit', fields: [
 ] };
 const PRESETS = {
   grid: [{ id: 'grid-v1', label: 'Grid V1', gap: '100-point step', note: 'Two buys and two sells on USDC / wNEAR.' }],
-  lp: [
-    { id: 'explicit', label: 'Choose prices', gap: '', note: 'You set the minimum and maximum USDC per NEAR.' },
-    { id: 'server', label: 'Server (100 points each side)', gap: '', note: 'The range is set around the pool point when the position opens.' },
-  ],
+  // LP has no execution-model cards: the owner always sets the minimum and maximum price.
+  lp: [],
 } as const;
 const MODES = [
-  { key: 'rebalanceOn', code: 'AR', label: 'Auto-rebalance', locked: true, fields: [
-    { k: 'ai', type: 'check', text: 'AI rotation suggestions' },
-  ] },
+  // AI range suggestions follow the server (on when NEAR AI is configured); no checkbox.
+  { key: 'rebalanceOn', code: 'AR', label: 'Auto-rebalance', locked: true, fields: [] },
   { key: 'compoundOn', code: 'AC', label: 'Auto-compound', locked: false, fields: [
     { k: 'minFeeBps', label: 'Minimum fees (basis points, 100 = 1%)', type: 'stepper', step: 1, min: 10, max: 1000, floor: 10 },
   ] },
@@ -119,6 +120,13 @@ export function NearDeployScreen({ kind: id, go }: { kind: 'grid' | 'lp'; go: (r
   const disabled = demoMode ? demoBusy : busy || logoutPending || runId !== null || (account !== null && (!options || reason !== '' || nameBad || (id === 'grid' && options.gridV2 === true && maxOrders !== '2' && maxOrders !== '4')));
   const point = hireOptions?.lp?.point ?? null;
   const currentPrice = point === null ? null : 1e18 / 1.0001 ** point;
+  // The pool's liquidity profile with the typed range painted over it, mapped as the LP detail page maps it (near-map: wNEAR token0,
+  // tick = -point, range ticks shifted by one for the half-open DCL range). Display only; the server derives the signed points itself.
+  const chartGeometry: LiquidityGeometry | null = point === null ? null : { spacing: 1, currentTick: tickOf(point), currentTickAsOfMs: 0,
+    orientation: { quoteIsToken0: false, decimals0: 24, decimals1: 6, symbol0: 'wNEAR', symbol1: 'USDC' }, display: { invert: false } };
+  const typedMin = parsePrice(draft.minPrice), typedMax = parsePrice(draft.maxPrice);
+  const chartRange: React.ComponentProps<typeof LiquidityChart>['range'] = typedMin !== null && typedMax !== null && typedMin < typedMax
+    ? { mode: 'live', tickLower: tickOf(pointOf(typedMin)) + 1, tickUpper: tickOf(pointOf(typedMax)) + 1 } : { mode: 'unavailable', reason: 'Enter a minimum below the maximum.' };
   const minDeposit = bounds ? nearNumber(bounds.minDeposit) : id === 'lp' ? 1.2 : 1;
   const maxDeposit = bounds ? nearNumber(bounds.maxDeposit) : id === 'lp' ? 3 : 2;
 
@@ -204,6 +212,10 @@ export function NearDeployScreen({ kind: id, go }: { kind: 'grid' | 'lp'; go: (r
             <Icon name={k.icon} size={13} />{k.label}
           </button>
         ))}
+        <span aria-disabled="true" title={LOCKED_TAB.title}
+          style={{ cursor: "not-allowed", font: "var(--weight-medium) var(--text-sm)/1 var(--font-sans)", color: "var(--text-disabled)", background: "transparent", border: "1px solid var(--line-1)", borderRadius: 999, padding: "8px 14px", display: "flex", alignItems: "center", gap: 7 }}>
+          <Icon name={LOCKED_TAB.icon} size={13} />{LOCKED_TAB.label}
+        </span>
       </div>
 
       <form className="fl-deploy-form" style={{ border: "1px solid var(--border-card)", borderTop: `2px solid ${active.color}`, borderRadius: "var(--radius-md)", background: "var(--surface-card)", padding: 24 }} onSubmit={event => {
@@ -212,29 +224,28 @@ export function NearDeployScreen({ kind: id, go }: { kind: 'grid' | 'lp'; go: (r
         void actions.prepareHire(id, text, id === 'lp' ? lpDraft : undefined, gridForm, agentName).then(jobId => { if (jobId) setRunId(jobId); });
       }}>
         <div className="fl-deploy-providers" aria-label="Protocols">
-          {VENUES.map((venue) => (
+          {(id === 'lp' ? LP_VENUES : VENUES).map((venue) => (
             <span className="fl-deploy-provider" key={venue.label} title={venue.label}>
               <img src={venue.asset} alt="" />
               <span>{venue.label}</span>
             </span>
           ))}
         </div>
-        <div style={{ display: "grid", gap: 14, marginBottom: 26 }}>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
-            <span className="fl-eyebrow">Execution model</span>
+        <div style={{ display: "grid", gap: 14, marginBottom: presets.length ? 26 : 18 }}>
+          <div style={{ display: "flex", alignItems: "baseline", justifyContent: presets.length ? "space-between" : "flex-end", gap: 16, flexWrap: "wrap" }}>
+            {presets.length ? <span className="fl-eyebrow">Execution model</span> : null}
             <span className="fl-deploy-form-links">
               <a href="#" onClick={(e) => e.preventDefault()}>Guides</a>
               <a href="#" onClick={(e) => e.preventDefault()}>Tutorial Videos</a>
             </span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: `repeat(${presets.length === 1 ? "auto-fill" : "auto-fit"}, minmax(200px, 1fr))`, gap: 10 }}>
+          {presets.length ? <div style={{ display: "grid", gridTemplateColumns: `repeat(${presets.length === 1 ? "auto-fill" : "auto-fit"}, minmax(200px, 1fr))`, gap: 10 }}>
             {presets.map((p) => {
               const on = p.id === selectedPreset;
               return (
                 <button key={p.id} type="button" onClick={() => {
-                  if (id === 'lp') actions.setLpField('rangeMode', p.id === 'server' ? 'server' : 'explicit');
                   // As in the BNB product, a preset overwrites the TP and SL values and leaves both checkboxes as they are.
-                  else if (gridV2 && 'set' in p) { setGridPreset(p.id as GridForm['preset']); setExit(e => applyGridPreset(e, p.id as GridForm['preset'])); }
+                  if (gridV2 && 'set' in p) { setGridPreset(p.id as GridForm['preset']); setExit(e => applyGridPreset(e, p.id as GridForm['preset'])); }
                 }}
                   style={{ position: "relative", textAlign: "left", cursor: "pointer", display: "grid", gap: 6, padding: "12px 14px", borderRadius: "var(--radius-sm)", background: on ? active.tint : "var(--surface-sunken)", border: `1px solid ${on ? active.color : "var(--line-1)"}` }}>
                   <span style={{ font: "var(--weight-medium) var(--text-sm)/1 var(--font-sans)", color: on ? active.color : "var(--ink-1)" }}>{p.label}</span>
@@ -243,12 +254,13 @@ export function NearDeployScreen({ kind: id, go }: { kind: 'grid' | 'lp'; go: (r
                 </button>
               );
             })}
-          </div>
+          </div> : null}
         </div>
 
         <div style={{ display: "grid", gap: 24 }}>
           {sections.map((s) => <Group key={s.title} section={s} values={values} set={set} />)}
           {gridV2 ? <Group section={GRID_EXIT} values={values} set={set} /> : null}
+          {id === 'lp' ? <LiquidityChart poolAddress={DCL_POOL_KEY} geometry={chartGeometry} range={chartRange} legend={{ range: 'your range' }} /> : null}
           {id === 'lp' && draft.rangeMode === 'explicit' ? (
             <Group section={{ title: 'Price range', fields: [] }} values={values} set={set}>
               <div style={{ display: "grid", gap: 10 }}>
