@@ -1,6 +1,6 @@
 # 4lpha NEAR: judge brief
 
-Evidence and links updated: 2026-11-14. Tracks: `defi`, `security`, `agents`.
+Evidence and links updated: 2026-11-14. Tracks: **Unstoppable DeFi** (`defi`), **AI Security & Defense** (`security`), **Agent Economy** (`agents`).
 
 [Visual judge guide](https://near.4lpha.tech/judge) · [Plain Markdown](https://near.4lpha.tech/judge.md) · [Repository and README](https://github.com/4lphaAI/4lpha-NEAR)
 
