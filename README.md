@@ -12,7 +12,7 @@ Deposit NEAR, pick an agent, and it trades on Rhea Finance from its own custody 
 
 <a href="https://youtu.be/LiskEYE7MjE"><img src="https://i.ytimg.com/vi/LiskEYE7MjE/hqdefault.jpg" alt="Watch the 4lpha NEAR main demo" width="480" /></a>
 
-Built at **NEAR HACKATHON** (2026-11-01 to 2026-11-14 UTC). Tracks: `defi`, `security`, `agents`.
+Built at **NEAR HACKATHON** (2026-11-01 to 2026-11-14 UTC). Tracks: **Unstoppable DeFi** (`defi`), **AI Security & Defense** (`security`), **Agent Economy** (`agents`).
 
 </div>
 
@@ -68,11 +68,11 @@ Where the funds sit: in your wallet until step 6; then in the agent wallet and i
 
 | Track | What the track asks for | What this project does |
 |---|---|---|
-| `defi` | Trading agents; a dry run with real data; failed and refunded outcomes shown; funds location at every step | Grid on DCL limit orders, LP on DCL concentrated liquidity, Schedule buy and Auto DCA on Rhea classic pools, all on mainnet. Demo mode runs the live rules on live pool reads with simulated balances. A refunded inner swap is classified as failed (`src/core/receipts.ts`). The job page shows the agent wallet's balances and its DCL orders or position. |
-| `security` | Spending limits, policy engines, sandboxed wallets; an attack demo | A per-agent custody wallet with an owner-owned policy (caps, default-deny whitelist, freeze), a worker guard on every destination, a watchdog that halts a job on any unexplained outflow, and an LLM limited to a fenced price range. [Security](#security-what-the-agents-key-can-and-cannot-do) states the key's limits and the remaining gap; the [attack demo](#attack-demo) runs offline and once on mainnet. |
-| `agents` | Agents that hold keys and spend; what they cannot do without the owner | Each agent pays its own gas and decides its trades alone. It cannot change its policy, unfreeze itself, raise its caps or resume after a freeze without the owner's signature (FINDINGS 1.19, 1.47). |
+| **Unstoppable DeFi** (`defi`) | Trading agents; a dry run with real data; failed and refunded outcomes shown; funds location at every step | Grid on DCL limit orders, LP on DCL concentrated liquidity, Schedule buy and Auto DCA on Rhea classic pools, all on mainnet. Demo mode runs the live rules on live pool reads with simulated balances. A refunded inner swap is classified as failed (`src/core/receipts.ts`). The job page shows the agent wallet's balances and its DCL orders or position. |
+| **AI Security & Defense** (`security`) | Spending limits, policy engines, sandboxed wallets; an attack demo | A per-agent custody wallet with an owner-owned policy (caps, default-deny whitelist, freeze), a worker guard on every destination, a watchdog that halts a job on any unexplained outflow, and an LLM limited to a fenced price range. [Security](#security-what-the-agents-key-can-and-cannot-do) states the key's limits and the remaining gap; the [attack demo](#attack-demo) runs offline and once on mainnet. |
+| **Agent Economy** (`agents`) | Agents that hold keys and spend; what they cannot do without the owner | Each agent pays its own gas and decides its trades alone. It cannot change its policy, unfreeze itself, raise its caps or resume after a freeze without the owner's signature (FINDINGS 1.19, 1.47). |
 
-`privacy` is not claimed: no TEE-tier model attestation is shown.
+**Privacy & Private AI** (`privacy`) is not claimed: no TEE-tier model attestation is shown.
 
 ---
 
