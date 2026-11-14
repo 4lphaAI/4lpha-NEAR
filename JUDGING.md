@@ -15,6 +15,7 @@ Start with the [main demo](https://youtu.be/LiskEYE7MjE). Strategy tutorials: [G
 | [Schedule buy](https://near.4lpha.tech/account/d43b9df5-e919-411f-a44a-9940b98e3a26) | Real funds, NEAR mainnet | Buying plan and recorded purchases. Stopped when checked on 2026-11-14. |
 | [Auto DCA](https://near.4lpha.tech/account/5c51e35b-586d-44d6-b96b-c810ef7677ea) | Real funds, NEAR mainnet | Entry, DCA levels, holdings and activity. Read its page for the current status. |
 | [Grid demo](https://near.4lpha.tech/demo/33a15c85-acee-46fe-8054-2ebb5031a54d) | Simulated funds | An existing simulation on live market reads, with no real transactions. |
+| [LP demo](https://near.4lpha.tech/demo/6ef9ea5b-a192-4d8c-bbdd-6a5682bf626d) | Simulated funds | Price range, simulated liquidity and activity on live market reads. No real transactions. |
 
 These operator-supplied pages are public and read-only; inspecting them needs no wallet connection. Status can change, so read the current page rather than assuming an agent is still running. A page or tutorial is not proof that every lifecycle path has been tested.
 
@@ -118,4 +119,4 @@ With a stolen custody API key, an attacker can transfer tokens through `/wallet/
 - Grid and LP use the pinned USDC/wNEAR DCL pool and DCL 2.4.2. A version mismatch stops automated DCL actions, including exit. Each needs 0.5 NEAR of non-withdrawable DCL registration outside the deposit.
 - Watchdog alerts appear on the job page and in the operator log; there is no push notification. Small mainnet runs demonstrate mechanics, not returns.
 - Lending is outside this submission. Privacy, independently verified inference, agent-to-agent payments and a NEAR AI Agent Market listing are not claimed.
-- The main demo, four strategy videos and five agent pages (four real-fund runs and one simulation) are linked above. The separate security video and curated transaction slots on the visual guide still await links. Missing links are not additional evidence.
+- The main demo, four strategy videos and six agent pages (four real-fund runs and two simulations) are linked above. Curated transaction slots on the visual guide still await links. Missing links are not additional evidence.

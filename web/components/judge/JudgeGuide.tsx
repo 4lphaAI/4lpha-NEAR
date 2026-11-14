@@ -97,14 +97,14 @@ export function JudgeGuide() {
         <div className="fl-jg-grid fl-jg-grid--two">{AGENT_PAGES.map(agent => <article className="fl-jg-card" key={agent.url}>
           <span className={`fl-jg-badge${agent.simulated ? '' : ' fl-jg-badge--proven'}`}>{agent.simulated ? 'Demo · Simulated funds' : 'NEAR mainnet · Real funds'}</span>
           <h3 className="fl-jg-h3">{agent.title}</h3><p className="fl-jg-p">{agent.description}</p>
-          <EvidenceLinks items={[{ label: agent.simulated ? 'Open Grid demo' : 'Open agent page', href: agent.url }]} />
+          <EvidenceLinks items={[{ label: agent.simulated ? `Open ${agent.title}` : 'Open agent page', href: agent.url }]} />
         </article>)}</div>
         <p className="fl-jg-sub">Or start your own no-funds simulation. Keep Demo selected on the deploy page:</p>
         <EvidenceLinks items={[{ label: 'Try Grid', href: '/deploy/grid' }, { label: 'Try LP', href: '/deploy/lp' }, { label: 'Try Schedule buy', href: '/deploy/trade/schedule' }, { label: 'Try Auto DCA', href: '/deploy/trade/dca' }]} />
       </Section>
 
-      <Section id="videos" eyebrow="Video walkthroughs" title="See it before you try it." sub="Start with the main demo, then watch a tutorial for each strategy. Play here or open the video on YouTube. The written security proof is below; its separate video is still pending.">
-        <div className="fl-jg-grid fl-jg-grid--two">{VIDEOS.map(video => <VideoCard key={video.title} video={video} />)}</div>
+      <Section id="videos" eyebrow="Video walkthroughs" title="See it before you try it." sub="Start with the main demo, then watch a tutorial for each strategy. Play here or open the video on YouTube.">
+        <div className="fl-jg-grid" style={{ maxWidth: 760, width: '100%', margin: '0 auto' }}>{VIDEOS.map(video => <VideoCard key={video.title} video={video} />)}</div>
         <span className="fl-jg-eyebrow">One tutorial per strategy</span>
         <div className="fl-jg-tutorials">{TUTORIAL_VIDEOS.map(video => <VideoCard key={video.title} video={video} />)}</div>
       </Section>

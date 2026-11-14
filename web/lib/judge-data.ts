@@ -19,7 +19,6 @@ export interface Feature {
 
 export const VIDEOS: Video[] = [
   { title: 'Main demo', description: 'The 4lpha NEAR product walkthrough: from choosing a strategy to following an agent on Rhea Finance.', url: 'https://youtu.be/LiskEYE7MjE' },
-  { title: 'We attacked our own agent', description: 'Forged model answers, malicious destinations and a real request made with the agent\'s own key. See what is blocked and what is only detected.', url: null },
 ];
 
 export const TUTORIAL_VIDEOS: Video[] = [
@@ -35,6 +34,7 @@ export const AGENT_LINKS = {
   schedule: 'https://near.4lpha.tech/account/d43b9df5-e919-411f-a44a-9940b98e3a26',
   dca: 'https://near.4lpha.tech/account/5c51e35b-586d-44d6-b96b-c810ef7677ea',
   gridDemo: 'https://near.4lpha.tech/demo/33a15c85-acee-46fe-8054-2ebb5031a54d',
+  lpDemo: 'https://near.4lpha.tech/demo/6ef9ea5b-a192-4d8c-bbdd-6a5682bf626d',
 } as const;
 
 export const AGENT_PAGES = [
@@ -43,6 +43,7 @@ export const AGENT_PAGES = [
   { title: 'Schedule buy', url: AGENT_LINKS.schedule, simulated: false, description: 'A recorded real-fund Schedule buy run. Inspect its buying plan and purchases. Stopped when checked on 14 Nov 2026.' },
   { title: 'Auto DCA', url: AGENT_LINKS.dca, simulated: false, description: 'A real-fund Auto DCA agent. Inspect its entry, DCA levels, holdings and activity on the current agent page.' },
   { title: 'Grid demo', url: AGENT_LINKS.gridDemo, simulated: true, description: 'An existing simulation on live market reads. Balances and fills are simulated; no real funds are used.' },
+  { title: 'LP demo', url: AGENT_LINKS.lpDemo, simulated: true, description: 'An existing LP simulation on live market reads. Inspect its range, simulated liquidity and activity; no real funds are used.' },
 ];
 
 export const FEATURES: Feature[] = [

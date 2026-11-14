@@ -78,7 +78,7 @@ Where the funds sit: in your wallet until step 6; then in the agent wallet and i
 
 ## Try it with no funds
 
-**Hosted:** open the [Grid showcase demo](https://near.4lpha.tech/demo/33a15c85-acee-46fe-8054-2ebb5031a54d) (simulated funds), or start your own at [near.4lpha.tech/deploy/grid](https://near.4lpha.tech/deploy/grid) (also `/deploy/lp`, `/deploy/trade/schedule`, `/deploy/trade/dca`): keep **Demo** and press **Start demo agent**. No wallet, no key, nothing signed.
+**Hosted:** open the [Grid showcase demo](https://near.4lpha.tech/demo/33a15c85-acee-46fe-8054-2ebb5031a54d) or [LP showcase demo](https://near.4lpha.tech/demo/6ef9ea5b-a192-4d8c-bbdd-6a5682bf626d) (simulated funds), or start your own at [near.4lpha.tech/deploy/grid](https://near.4lpha.tech/deploy/grid) (also `/deploy/lp`, `/deploy/trade/schedule`, `/deploy/trade/dca`): keep **Demo** and press **Start demo agent**. No wallet, no key, nothing signed.
 
 **Locally:** demo mode signs nothing, holds no wallet or OutLayer key and reads public RPC only. Requirements: Node.js 22.22.2 or newer (`node:sqlite`), npm, git. No `.env.local` is needed.
 
