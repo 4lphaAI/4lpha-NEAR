@@ -271,6 +271,9 @@ export function AccountScreenContent(props: {
         </div>}
       </> : <PortfolioSkeleton />}
     {props.children}
+    <a href="https://outlayer.ai" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 40, font: "var(--type-body-md)", color: "var(--text-muted)", textDecoration: "none" }}>
+      Powered by <img src="/design/outlayer.png" alt="" style={{ width: 22, height: 22, borderRadius: 4 }} /><strong style={{ color: "var(--ink-1)" }}>OutLayer</strong>
+    </a>
   </div>;
 }
 
