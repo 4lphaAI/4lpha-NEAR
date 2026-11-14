@@ -106,7 +106,9 @@ export function NearDeployScreen({ kind: id, go }: { kind: 'grid' | 'lp'; go: (r
     try { window.localStorage.setItem(MODE_KEY, next); } catch { /* Browser storage can be unavailable. */ }
   };
   const hireOptions = demoMode && demo ? demo.hire : options;
-  const draft = demoMode && demo ? applyLpPrefill(lpDraft, demo.hire) : lpDraft;
+  // Live mode before sign-in has no pool point: the public demo options carry the same mainnet pool point, so the range still prefills at +/-100 points.
+  const priceOptions = demoMode && demo ? demo.hire : options?.lp?.point != null ? options : demo?.hire ?? options;
+  const draft = priceOptions ? applyLpPrefill(lpDraft, priceOptions) : lpDraft;
   let daily = '3 times your deposit', amount: bigint | null = null;
   try { amount = depositYocto(text); daily = exactNear(3n * amount); } catch { /* Keep the formula visible while editing. */ }
   const initialPosition = amount === null ? '-' : exactNear(amount - 800000000000000000000000n);
@@ -119,7 +121,7 @@ export function NearDeployScreen({ kind: id, go }: { kind: 'grid' | 'lp'; go: (r
   // The server's rule for the display name (store.ts parseJobName); an empty name sends none.
   const nameBad = agentName.trim() !== '' && !/^[\p{L}\p{N} ._-]{1,40}$/u.test(agentName.trim().replace(/\s+/gu, ' '));
   const disabled = demoMode ? demoBusy : busy || logoutPending || runId !== null || (account !== null && (!options || reason !== '' || nameBad || (id === 'grid' && options.gridV2 === true && maxOrders !== '2' && maxOrders !== '4')));
-  const point = hireOptions?.lp?.point ?? null;
+  const point = priceOptions?.lp?.point ?? null;
   const currentPrice = point === null ? null : 1e18 / 1.0001 ** point;
   // The pool's liquidity profile with the typed range painted over it, mapped as the LP detail page maps it (near-map: wNEAR token0,
   // tick = -point, range ticks shifted by one for the half-open DCL range). Display only; the server derives the signed points itself.
