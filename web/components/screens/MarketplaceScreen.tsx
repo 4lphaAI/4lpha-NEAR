@@ -9,7 +9,7 @@
    namespace proxies and the window globals became real imports/exports. */
 import React from "react";
 import { AgentCard, Button, CATEGORY_LIST, EmptyState, FilterChip } from "@/design-system";
-import { AGENTS, agentDeployKind } from "@/lib/design-data";
+import { AGENTS, agentDeployKind, agentHasDemo, openDemo, openLive } from "@/lib/design-data";
 import { DeployAgentSection } from "@/components/screens/DeployAgentScreen";
 
 const MARKETPLACE_CARD_CSS = `
@@ -61,7 +61,8 @@ function MarketplaceScreen({ go, search = "" }) {
       {list.length ? (
         <div className="fl-grid">
           {list.map((a) => (
-            <AgentCard key={a.id} {...a} onOpen={() => go(`/agent/${a.id}`)} onHire={() => go(`/deploy/${agentDeployKind(a)}`)} style={{ cursor: "pointer" }}
+            <AgentCard key={a.id} {...a} onOpen={() => go(`/agent/${a.id}`)} onHire={() => openLive(go, `/deploy/${agentDeployKind(a)}`)} style={{ cursor: "pointer" }}
+              demo={agentHasDemo(a)} onDemo={agentHasDemo(a) ? () => openDemo(go, `/deploy/${agentDeployKind(a)}`) : undefined}
               onClick={(e) => { if (!e.target.closest("button")) go(`/agent/${a.id}`); }} />
           ))}
         </div>

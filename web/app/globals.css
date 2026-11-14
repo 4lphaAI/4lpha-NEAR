@@ -835,6 +835,8 @@ button { font: inherit; color: inherit; }
 .fl-tier--verified{color:var(--tier-verified);border-color:var(--tier-verified-line);background:var(--brand-tint)}
 .fl-tier--soon{color:var(--text-subtle);border-color:var(--line-2);background:transparent}
 .fl-tier--registry{color:var(--tier-registry);border-color:var(--tier-registry-line);background:transparent}
+.fl-tier--demo{color:var(--profit);border-color:color-mix(in srgb,var(--profit) 45%,transparent);background:color-mix(in srgb,var(--profit) 10%,transparent);font-weight:var(--weight-semibold)}
+.fl-card__actions{display:flex;align-items:center;gap:var(--space-3);flex-wrap:wrap;justify-content:flex-end}
 
 .fl-chip{display:inline-flex;align-items:center;gap:var(--space-3);height:30px;padding:0 var(--space-5);border:var(--border-width) solid var(--line-1);border-radius:var(--radius-pill);background:var(--surface-card);color:var(--text-muted);font:var(--weight-medium) var(--text-base)/1 var(--font-sans);cursor:pointer;transition:var(--transition-control)}
 .fl-chip:hover{border-color:var(--line-2);color:var(--ink-1)}
@@ -1244,6 +1246,7 @@ button { font: inherit; color: inherit; }
   .fl-hired-actions .fl-btn:last-child{grid-column:1/-1}
   .fl-card__foot{align-items:stretch;flex-direction:column}
   .fl-card__foot .fl-btn{width:100%}
+  .fl-card__foot .fl-card__actions{flex-direction:column;align-items:stretch}
   .fl-empty{padding:36px 18px}
 }
 

@@ -122,7 +122,7 @@ test('15.11 the router passes the model and the marketplace cards route to it', 
   const card = (id: string) => AGENTS.find(a => a.id === id)!;
   assert.equal(card('recurring-buy').disabled, undefined); assert.equal(card('auto-dca').disabled, undefined);
   assert.equal(agentDeployKind(card('recurring-buy')), 'trade/schedule'); assert.equal(agentDeployKind(card('auto-dca')), 'trade/dca');
-  assert.equal(agentDeployKind(card('ai-token-trader')), 'trading'); assert.equal(agentDeployKind(card('grid-keeper')), 'grid');
+  assert.equal(agentDeployKind(card('ai-token-trader')), 'trade/degen'); assert.equal(agentDeployKind(card('grid-keeper')), 'grid');
 });
 
 test('15.11 each form validates against the bounds in TradeOptions and the hire body goes through prepareHire, never /api/meme', async t => {

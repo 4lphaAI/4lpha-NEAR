@@ -192,12 +192,12 @@ test('recheck L-3: the trader card, detail page and pet line describe a paper ag
   const Detail = module.AgentDetailScreen as (props: Record<string, unknown>) => ReactElement;
   const page = (id: string) => renderToStaticMarkup(React.createElement(Detail, { agent: AGENTS.find(a => a.id === id), go: () => {} }));
   const paper = page('ai-token-trader');
-  for (const text of [/Paper only\. No deposit or agent wallet\./, /joins on paper after an AI gate/, /Place real orders or create an agent wallet\./, /Only the owner can stop the paper agent\./, /No deposit, agent wallet or real orders\./, /paper agent fee/]) assert.match(paper, text);
+  for (const text of [/Paper only\. No deposit or agent wallet\./, /joins on paper after an AI gate/, /Place real orders or create a wallet\./, /Only the owner can stop it\./, /Try the demo: no wallet or funds needed\./, /No deposit, agent wallet or real orders\./, /paper agent fee/]) assert.match(paper, text);
   for (const claim of [/freeze the agent wallet/, /Network gas/, /Takes 3 steps/, /performance fee/, /on-chain/, /Rhea/, /revoke/, /swap/i, /take profit|stop loss/i]) assert.doesNotMatch(paper, claim);
   assert.equal(paper.includes(String.fromCharCode(0x2014)), false);
   // The other agents keep their own text.
   const lp = page('range-pilot');
-  for (const text of [/Takes 3 steps\. You can revoke anytime\./, /You can freeze the agent wallet at any time\./, /performance fee/, /Network gas is paid from the NEAR in the agent wallet\./]) assert.match(lp, text);
+  for (const text of [/Takes 3 steps\. You can revoke anytime\./, /You can freeze the agent wallet anytime\./, /performance fee/, /Gas is paid from the agent wallet/]) assert.match(lp, text);
   assert.doesNotMatch(lp, /Paper only|paper agent/);
   const line = SIGMA_REACTIONS['deploy.trade'].bubbleText ?? '';
   assert.match(line, /Paper/); assert.match(line, /No real orders or agent wallet/); assert.doesNotMatch(line, /capped spend|Pinned universe/);

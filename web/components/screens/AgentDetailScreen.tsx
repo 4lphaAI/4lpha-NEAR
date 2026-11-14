@@ -19,7 +19,7 @@ import { LendingExplainer } from "@/components/explainers/LendingExplainer";
 import { ScheduleExplainer } from "@/components/explainers/ScheduleExplainer";
 import { DcaExplainer } from "@/components/explainers/DcaExplainer";
 import { SmartExplainer } from "@/components/explainers/SmartExplainer";
-import { agentDeployKind } from "@/lib/design-data";
+import { agentDeployKind, agentHasDemo, openDemo, openLive } from "@/lib/design-data";
 
 /** A protocol/venue name renders as its logo when the design ships one. */
 function ProtocolMark({ name }) {
@@ -46,6 +46,9 @@ function AgentDetailScreen({ agent, go }) {
   const isAegisLP = agent.id === "aegis-lp";
   const isPaperTrade = agent.id === "ai-token-trader";
   const [range, setRange] = React.useState("30d");
+  // Try demo now opens the deploy page in Demo mode; Hire Now opens it in Live mode (real funds on mainnet).
+  const hasDemo = agentHasDemo(agent);
+  const deployRoute = `/deploy/${agentDeployKind(agent)}`;
   const metrics = agent.metrics || [
     { label: isPaperTrade ? "Paper P&L" : cat.metricLabel, value: agent.metricValue, tone: agent.metricTone === "flat" ? "flat" : "profit", note: isPaperTrade ? "paper only" : "on-chain" },
     { label: "Users hiring", value: String(agent.hiredCount), note: "right now" },
@@ -64,7 +67,8 @@ function AgentDetailScreen({ agent, go }) {
           <div style={{ display: "flex", flexDirection: "column", gap: 10, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
               <h1 style={{ font: "var(--type-page-title)" }}>{agent.name}</h1>
-              <TierBadge tier={isAegisLP ? "verified" : agent.tier} />
+              {hasDemo ? <span className="fl-tier fl-tier--demo">Demo</span> : null}
+              {agent.demoOnly ? null : <TierBadge tier={isAegisLP ? "verified" : agent.tier} />}
             </div>
             <p style={{ font: "var(--type-body-md)", color: "var(--text-muted)", maxWidth: "62ch" }}>{agent.tagline}</p>
             <div className="fl-card__meta" style={{ padding: 0 }}>
@@ -75,7 +79,10 @@ function AgentDetailScreen({ agent, go }) {
           </div>
         </div>
         <div className="fl-detail-cta" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 10 }}>
-          <Button variant="primary" size="lg" onClick={() => go(`/deploy/${agentDeployKind(agent)}`)} disabled={agent.disabled}>{agent.disabled ? "Coming soon" : "Hire Now"}</Button>
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+            {hasDemo ? <Button variant={agent.demoOnly ? "primary" : "secondary"} size="lg" onClick={() => openDemo(go, deployRoute)}>Try demo now</Button> : null}
+            {agent.demoOnly ? null : <Button variant="primary" size="lg" onClick={() => openLive(go, deployRoute)} disabled={agent.disabled}>{agent.disabled ? "Coming soon" : "Hire Now"}</Button>}
+          </div>
           <span style={{ font: "var(--weight-regular) var(--text-sm)/1 var(--font-sans)", color: "var(--text-subtle)" }}>{isPaperTrade ? "Paper only. No deposit or agent wallet." : "Takes 3 steps. You can revoke anytime."}</span>
         </div>
       </div>
@@ -112,94 +119,91 @@ function AgentDetailScreen({ agent, go }) {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Operator, 2026-11-14: every line fits one line in the side panel (about 45 characters at most), and the deposit is not quoted in NEAR. */}
           <Panel title="What this agent is allowed to do">
+            {hasDemo ? <PermissionItem kind="info">Try the demo: no wallet or funds needed.</PermissionItem> : null}
             {isPaperTrade ? (
               <>
-                <PermissionItem>Join screened meme.cooking auctions on paper after an AI gate.</PermissionItem>
-                <PermissionItem>Track paper positions and exits within your settings.</PermissionItem>
-                <PermissionItem kind="deny">Place real orders or create an agent wallet.</PermissionItem>
+                <PermissionItem>Join screened meme.cooking auctions on paper.</PermissionItem>
+                <PermissionItem>Pass an AI check before each paper join.</PermissionItem>
+                <PermissionItem>Track paper positions and exits.</PermissionItem>
+                <PermissionItem kind="deny">Place real orders or create a wallet.</PermissionItem>
               </>
             ) : agent.explainer === "lending" ? (
               <>
-                <PermissionItem>Watch the health factor on your {agent.protocol} account, no other protocol, no other wallet.</PermissionItem>
-                <PermissionItem>Repay your largest debt market first when your health factor crosses your trigger line.</PermissionItem>
-                <PermissionItem>Use only the wallet balance held for this, never a new borrow, never your other assets.</PermissionItem>
-                <PermissionItem>Re-read the health factor on-chain after repaying, and stop once it clears your target.</PermissionItem>
-                <PermissionItem>Log every repay, with the transaction and the before/after health factor.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
-                <PermissionItem kind="deny">Supply new collateral or open new borrows on its own.</PermissionItem>
+                <PermissionItem>Watch your health factor on {agent.protocol}.</PermissionItem>
+                <PermissionItem>Repay when it crosses your trigger line.</PermissionItem>
+                <PermissionItem>Use only the balance set aside for it.</PermissionItem>
+                <PermissionItem>Re-check and stop once it clears target.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw to any account but yours.</PermissionItem>
+                <PermissionItem kind="deny">Borrow or add collateral on its own.</PermissionItem>
               </>
             ) : agent.explainer === "trade" ? (
               <>
-                <PermissionItem>Trade only tokens on the Rhea token list, paired with USDC.</PermissionItem>
-                <PermissionItem>Size entries within your capital and max open positions.</PermissionItem>
-                <PermissionItem>Swap on Rhea.</PermissionItem>
-                <PermissionItem>Exit at your take profit, stop loss or max hold time.</PermissionItem>
-                <PermissionItem>Let the LLM decide any exit you leave blank.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
-                <PermissionItem kind="deny">Spend past the capital you set, or raise its own limits.</PermissionItem>
+                <PermissionItem>Trade only Rhea-listed tokens.</PermissionItem>
+                <PermissionItem>Size entries within your capital.</PermissionItem>
+                <PermissionItem>Exit at your take profit or stop loss.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw to any account but yours.</PermissionItem>
+                <PermissionItem kind="deny">Spend past the capital you set.</PermissionItem>
               </>
             ) : agent.explainer === "schedule" ? (
               <>
-                <PermissionItem>Buy one token with USDC on your schedule.</PermissionItem>
+                <PermissionItem>Deposit NEAR; it buys one token on schedule.</PermissionItem>
                 <PermissionItem>Spend the same amount on every buy.</PermissionItem>
-                <PermissionItem>Swap on Rhea.</PermissionItem>
-                <PermissionItem>Hold what it buys; it never sells on its own.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
-                <PermissionItem kind="deny">Spend past the total budget you set.</PermissionItem>
+                <PermissionItem>Swap only on Rhea pools.</PermissionItem>
+                <PermissionItem>Hold what it buys; never sells on its own.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw to any account but yours.</PermissionItem>
+                <PermissionItem kind="deny">Spend past the budget you set.</PermissionItem>
               </>
             ) : agent.explainer === "dca" ? (
               <>
-                <PermissionItem>Open each round with a base buy of one token.</PermissionItem>
-                <PermissionItem>Buy more at each price-drop step, up to your max.</PermissionItem>
-                <PermissionItem>Sell the round at your take profit over average cost.</PermissionItem>
-                <PermissionItem>Start a new round after each take profit.</PermissionItem>
-                <PermissionItem>On stop loss, stop the agent without selling.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
+                <PermissionItem>Deposit NEAR; it opens with a base buy.</PermissionItem>
+                <PermissionItem>Buy more at each price-drop step.</PermissionItem>
+                <PermissionItem>Sell at your take profit over average cost.</PermissionItem>
+                <PermissionItem>On stop loss, end the job without selling.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw to any account but yours.</PermissionItem>
                 <PermissionItem kind="deny">Spend past the capital you set.</PermissionItem>
               </>
             ) : agent.explainer === "smart" ? (
               <>
                 <PermissionItem>Hold 2 to 5 tokens at your target weights.</PermissionItem>
-                <PermissionItem>Check the basket at your interval (4h to daily).</PermissionItem>
-                <PermissionItem>Rebalance only when a token drifts past your threshold.</PermissionItem>
-                <PermissionItem>Swap on Rhea.</PermissionItem>
-                <PermissionItem>Keep the tokens when you stop it; no sell-off.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
-                <PermissionItem kind="deny">Invest more than the total capital you set.</PermissionItem>
+                <PermissionItem>Check the basket at your interval.</PermissionItem>
+                <PermissionItem>Rebalance only past your drift threshold.</PermissionItem>
+                <PermissionItem>Keep the tokens when you stop it.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw to any account but yours.</PermissionItem>
+                <PermissionItem kind="deny">Invest more than the capital you set.</PermissionItem>
               </>
             ) : agent.explainer === "compound" ? (
               <>
-                <PermissionItem>Manage only the liquidity you delegate on {agent.protocol}.</PermissionItem>
-                <PermissionItem>Collect the swap fees that position has earned.</PermissionItem>
-                <PermissionItem>Swap the part of those fees needed to match the pool ratio.</PermissionItem>
-                <PermissionItem>Add the fees back into the same position.</PermissionItem>
-                <PermissionItem>Wait until unclaimed fees are worth more than gas to compound.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
-                <PermissionItem kind="deny">Move your range, or add capital beyond what you delegate.</PermissionItem>
+                <PermissionItem>Manage only the position you delegate.</PermissionItem>
+                <PermissionItem>Collect the fees the position earned.</PermissionItem>
+                <PermissionItem>Add the fees back into the position.</PermissionItem>
+                <PermissionItem>Compound only when fees beat gas.</PermissionItem>
+                <PermissionItem kind="deny">Withdraw to any account but yours.</PermissionItem>
+                <PermissionItem kind="deny">Move your range or add more capital.</PermissionItem>
               </>
             ) : agent.categoryId === "lp" ? (
               <>
-                <PermissionItem>Manage only the liquidity you delegate on {agent.protocol}.</PermissionItem>
-                <PermissionItem>Move position to a new price range when price drifts outside band.</PermissionItem>
-                <PermissionItem>Collect the fees earns and put them back in your positions.</PermissionItem>
-                <PermissionItem>Swap between the two tokens only as much as re-ranging needs.</PermissionItem>
-                <PermissionItem>Wait out your drift trigger and cooldown before it moves anything.</PermissionItem>
-                <PermissionItem kind="deny">Withdraw funds to any account but yours.</PermissionItem>
-                <PermissionItem kind="deny">Add liquidity beyond what you delegate.</PermissionItem>
+                <PermissionItem>Deposit NEAR; it swaps what it needs itself.</PermissionItem>
+                <PermissionItem>Provide liquidity only on USDC / wNEAR.</PermissionItem>
+                <PermissionItem>Re-center the range when price leaves it.</PermissionItem>
+                <PermissionItem>Compound fees back while in range.</PermissionItem>
+                <PermissionItem>Exit at your stop loss or take profit.</PermissionItem>
+                <PermissionItem kind="deny">Send NEAR to any account but yours or Rhea.</PermissionItem>
+                <PermissionItem kind="deny">Change its own limits or policy.</PermissionItem>
               </>
             ) : (
               <>
-                <PermissionItem>Deposit 1 to 2 NEAR. The agent swaps what it needs into USDC itself.</PermissionItem>
-                <PermissionItem>Trade only USDC / wNEAR on Rhea DCL, with at most four open limit orders.</PermissionItem>
-                <PermissionItem>After a full fill, place the reverse order one step away.</PermissionItem>
-                <PermissionItem>Spend at most 0.25 NEAR per transaction and 3 times your deposit per day, as your wallet policy sets.</PermissionItem>
-                <PermissionItem>Pay out only to your own NEAR account when you stop it.</PermissionItem>
-                <PermissionItem kind="deny">Send NEAR to any account but yours or the Rhea contracts.</PermissionItem>
-                <PermissionItem kind="deny">Change its own limits. Only you can update or freeze the policy.</PermissionItem>
+                <PermissionItem>Deposit NEAR; it swaps what it needs itself.</PermissionItem>
+                <PermissionItem>Trade only USDC / wNEAR on Rhea DCL.</PermissionItem>
+                <PermissionItem>Keep at most four limit orders open.</PermissionItem>
+                <PermissionItem>After a fill, place the reverse order.</PermissionItem>
+                <PermissionItem>Spend only within your signed wallet policy.</PermissionItem>
+                <PermissionItem kind="deny">Send NEAR to any account but yours or Rhea.</PermissionItem>
+                <PermissionItem kind="deny">Change its own limits or policy.</PermissionItem>
               </>
             )}
-            {isPaperTrade ? <PermissionItem kind="info">Only the owner can stop the paper agent.</PermissionItem> : <PermissionItem kind="info" note="Owner-only, on-chain.">You can freeze the agent wallet at any time.</PermissionItem>}
+            {isPaperTrade ? <PermissionItem kind="info">Only the owner can stop it.</PermissionItem> : <PermissionItem kind="info" note="Owner-only, on-chain.">You can freeze the agent wallet anytime.</PermissionItem>}
           </Panel>
 
           <Panel title="Pricing">
@@ -209,7 +213,7 @@ function AgentDetailScreen({ agent, go }) {
             </div>
             <div style={{ marginTop: 14 }}>
               <PermissionItem kind="info">No fees during the beta.</PermissionItem>
-              <PermissionItem kind="info">{isPaperTrade ? "No deposit, agent wallet or real orders." : "Network gas is paid from the NEAR in the agent wallet."}</PermissionItem>
+              <PermissionItem kind="info">{isPaperTrade ? "No deposit, agent wallet or real orders." : "Gas is paid from the agent wallet's NEAR."}</PermissionItem>
             </div>
           </Panel>
 

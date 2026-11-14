@@ -789,6 +789,7 @@ const PROTOCOL_LOGOS = {
   "Rhea DCL": "/design/protocols/rhea.png",
   "Rhea": "/design/protocols/rhea.png",
   "Rhea Lend": "/design/protocols/rhea.png",
+  "NEAR AI": "/design/tokens/near.svg",
   "Uniswap": "/design/protocols/uniswap.png",
   "Ondo": "/design/protocols/ondo.png",
   "uniswap": "/design/protocols/uniswap.png",
@@ -853,6 +854,10 @@ function AgentCard({
   valueSub,
   valueTone,
   warning,
+  demo,
+  onDemo,
+  demoOnly,
+  nearAi,
   ...rest
 }) {
   const cat = __ds_scope.category(categoryId);
@@ -892,11 +897,13 @@ function AgentCard({
   }, cat.label))), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
-      flexDirection: "column",
-      alignItems: "flex-end",
+      flexDirection: "row",
+      alignItems: "center",
       gap: "var(--space-3)"
     }
-  }, /*#__PURE__*/React.createElement(__ds_scope.TierBadge, {
+  }, demo ? /*#__PURE__*/React.createElement("span", {
+    className: "fl-tier fl-tier--demo"
+  }, "Demo") : null, demoOnly ? null : /*#__PURE__*/React.createElement(__ds_scope.TierBadge, {
     tier: tier === "coming-soon" ? "coming-soon" : "verified"
   }))), /*#__PURE__*/React.createElement("p", {
     className: "fl-card__tagline"
@@ -947,12 +954,18 @@ function AgentCard({
     className: "fl-zerofee__text"
   }, "0 Fees"))), /*#__PURE__*/React.createElement("span", {
     className: "fl-card__price-unit"
-  }, "this month")), /*#__PURE__*/React.createElement(__ds_scope.Button, {
+  }, "this month")), /*#__PURE__*/React.createElement("div", {
+    className: "fl-card__actions"
+  }, onDemo ? /*#__PURE__*/React.createElement(__ds_scope.Button, {
+    variant: "secondary",
+    size: "sm",
+    onClick: onDemo
+  }, "Try demo now") : null, demoOnly ? null : /*#__PURE__*/React.createElement(__ds_scope.Button, {
     variant: "primary",
     size: "sm",
     onClick: onHire,
     disabled: disabled
-  }, "Hire Now")));
+  }, "Hire Now"))));
 }
 Object.assign(__ds_scope, { AgentCard });
 })(); } catch (e) { __ds_ns.__errors.push({ path: "components/agents/AgentCard.jsx", error: String((e && e.message) || e) }); }

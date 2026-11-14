@@ -86,17 +86,19 @@ test('audit H-1: the Hire button on the enabled AI Token Trader card opens the t
   assert.equal(screenName(kit.screen()), 'NearTradeDeployScreen', `after Hire the app is on ${kit.route()}`);
 });
 
-test('audit H-1: Hire Now on the AI Token Trader detail page opens the trade deploy screen', async t => {
+// Operator, 2026-11-14: the paper agent's detail page has only Try demo now (no Hire Now), and it opens the Degen trade screen.
+test('audit H-1: Try demo now on the AI Token Trader detail page opens the trade deploy screen', async t => {
   page(t);
   const kit = await kitApp();
   kit.go('/agent/ai-token-trader');
   assert.equal(screenName(kit.screen()), 'AgentDetailScreen');
   assert.equal((kit.screen().props.agent as { id: string }).id, 'ai-token-trader');
   const detail = await designScreen('web/components/screens/AgentDetailScreen.tsx', 'AgentDetailScreen', kit.screen().props);
-  const hire = find(detail, node => node.props.children === 'Hire Now')!;
-  assert.equal(hire.props.disabled, false);
-  (hire.props.onClick as () => void)();
-  assert.equal(screenName(kit.screen()), 'NearTradeDeployScreen', `after Hire Now the app is on ${kit.route()}`);
+  assert.equal(find(detail, node => node.props.children === 'Hire Now'), undefined);
+  const demo = find(detail, node => node.props.children === 'Try demo now')!;
+  (demo.props.onClick as () => void)();
+  assert.equal(screenName(kit.screen()), 'NearTradeDeployScreen', `after Try demo now the app is on ${kit.route()}`);
+  assert.equal(kit.route(), '/deploy/trade/degen');
 });
 
 // A screen with slot-backed state, a signed-in session and a scripted API, effects run once (the pattern of web/test/meme-ui.test.ts).

@@ -35,18 +35,38 @@ export interface Agent {
   activity?: AgentActivity[];
   statusLine?: string;
   disabled?: boolean;
+  /** The card shows only the Demo badge and Try demo now: no tier badge, no Hire Now (the paper meme agent). */
+  demoOnly?: boolean;
 }
 
 /** Public deploy route for the hire action on marketplace and detail cards. */
-export function agentDeployKind(agent: Pick<Agent, "categoryId" | "id">): "grid" | "trading" | "trade/schedule" | "trade/dca" | "lp" | "lending" {
+export function agentDeployKind(agent: Pick<Agent, "categoryId" | "id">): "grid" | "trading" | "trade/schedule" | "trade/dca" | "trade/degen" | "lp" | "lending" {
   // Trade V1 section 14: the two live trading agents open their own card on the trade deploy screen.
   if (agent.id === "recurring-buy") return "trade/schedule";
   if (agent.id === "auto-dca") return "trade/dca";
+  // Operator, 2026-11-14: the paper meme agent opens its own Degen card.
+  if (agent.id === "ai-token-trader") return "trade/degen";
   if (agent.categoryId === "grid") return "grid";
   if (agent.categoryId === "trading") return "trading";
   if (agent.categoryId === "lp") return "lp";
   return "lending";
 }
+
+/** Catalogue cards whose deploy page offers the no-funds demo: Grid (Grid Keeper and Ladder NEAR), LP, Schedule buy,
+    Auto DCA and the paper meme agent. */
+const DEMO_AGENT_IDS = new Set(["grid-keeper", "ladder-near", "range-pilot", "aegis-lp", "recurring-buy", "auto-dca", "ai-token-trader"]);
+export function agentHasDemo(agent: Pick<Agent, "id" | "tier">): boolean {
+  return DEMO_AGENT_IDS.has(agent.id) && agent.tier !== "coming-soon";
+}
+
+/** Opens a deploy route in the given mode: writes the remembered Demo | Live choice the deploy screens read, then navigates.
+    Try demo now opens Demo; Hire Now opens Live (real funds on mainnet). */
+export function openDeploy(go: (route: string) => void, route: string, mode: "demo" | "live"): void {
+  try { window.localStorage.setItem("fourlpha_deploy_mode", mode); } catch { /* Browser storage can be unavailable. */ }
+  go(route);
+}
+export const openDemo = (go: (route: string) => void, route: string): void => openDeploy(go, route, "demo");
+export const openLive = (go: (route: string) => void, route: string): void => openDeploy(go, route, "live");
 
 /** A hired-agent overlay, merged over the catalogue Agent by route. */
 export interface HiredAgent {
@@ -63,16 +83,16 @@ export const AGENTS: Agent[] = [
   { id: "grid-keeper", name: "Grid Keeper", categoryId: "grid", protocol: "Rhea DCL", tier: "verified", status: "live",
     tagline: "Limit-order grid on USDC / wNEAR, Rhea DCL.",
     metricValue: "New", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDC / wNEAR", dailyCap: "1 to 2 NEAR" },
-  { id: "ladder-near", name: "Ladder NEAR", categoryId: "grid", protocol: "Rhea DCL", tier: "verified", status: "live", disabled: true,
+  { id: "ladder-near", name: "Ladder NEAR", categoryId: "grid", protocol: "Rhea DCL", tier: "verified", status: "live", disabled: false,
     tagline: "A buy and sell ladder around the NEAR price.",
     metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDt / wNEAR" },
-  { id: "range-pilot", name: "Range Pilot", categoryId: "lp", protocol: "Rhea DCL", tier: "verified", status: "live", disabled: false,
+  { id: "range-pilot", name: "Range Pilot", categoryId: "lp", protocol: "Rhea DCL", tier: "verified", status: "live", disabled: false, relatedProtocols: ["NEAR AI"],
     tagline: "Keeps your Rhea DCL range on the price.",
     metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDC / wNEAR" },
-  { id: "aegis-lp", name: "Aegis LP", categoryId: "lp", protocol: "Rhea DCL", tier: "verified", status: "live", explainer: "compound", disabled: true,
+  { id: "aegis-lp", name: "Aegis LP", categoryId: "lp", protocol: "Rhea DCL", tier: "verified", status: "live", explainer: "compound", disabled: false, relatedProtocols: ["NEAR AI"],
     tagline: "Compounds your Rhea DCL fees back in.",
     metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "this month", pair: "USDC / wNEAR" },
-  { id: "ai-token-trader", name: "AI Quant Trader", categoryId: "trading", protocol: "meme.cooking", tier: "verified", status: "live", explainer: "trade", disabled: false,
+  { id: "ai-token-trader", name: "AI Quant Trader", categoryId: "trading", protocol: "meme.cooking", tier: "verified", status: "live", explainer: "trade", disabled: false, demoOnly: true,
     tagline: "Joins meme.cooking auctions on paper, AI-gated.",
     metricValue: "-", metricTone: "flat", hiredCount: 0, price: "0 Fees", priceUnit: "paper only", pair: "Paper auctions. No real orders." },
   { id: "recurring-buy", name: "Recurring Buy", categoryId: "trading", protocol: "Rhea", tier: "verified", status: "live", explainer: "schedule",
