@@ -10,7 +10,7 @@ import { exitBudget, watchdogFresh, type GuardedOps, type OpKind } from './ops.j
 import { WNEAR } from './pins.js';
 import { readTradePool } from './rhea-classic.js';
 import { tradePair, TRADE_PAIRS, type TradePair } from './trade-pairs.js';
-import { DCA_LIFE_MS, ladderFactor, TRADE_LIFE_MS, tradePlan, type TradeSettings } from './trade-settings.js';
+import { DCA_LIFE_MS, ladderFactor, roundBasis, roundOf, roundReset, TRADE_LIFE_MS, tradePlan, type DcaRound, type RoundBase, type TradeSettings } from './trade-settings.js';
 // Demo mode spec section 2: pure trade rules moved byte-identical to trade-settings.ts; re-exported here so every import keeps working.
 export { levelNeed, medianWait, outGivenIn, tpLine } from './trade-settings.js';
 import { levelNeed, medianWait, outGivenIn, tpLine, type Sample } from './trade-settings.js';
@@ -39,6 +39,8 @@ export interface TradeState {
   levels: ('waiting' | 'armed' | 'filled' | 'skipped')[];
   protect: { since: number; block: number } | null;
   done: { kind: 'budget' | 'runs' | 'date' | 'life' | 'tp' | 'tp-cap' | 'tp-short' | 'sl'; at: number; value?: string; line?: string } | null;
+  /** Auto DCA rounds (docs/specs/TRADE-V1-DCA-ROUNDS-SPEC.md 1.1). Absent on a state written before rounds: round 1, zero base, no cooldown. */
+  round?: number; roundBase?: RoundBase; cooldownUntil?: number | null; rounds?: DcaRound[];
 }
 type DoneKind = NonNullable<TradeState['done']>['kind'];
 
@@ -185,8 +187,9 @@ function applyTradeStep(d: WorkerDeps, j: Job, s: TradeSettings, pair: TradePair
     next.gasSell = add(old.gasSell, burnt);
     if (row.verdict === 'swapped' && row.used === amount && (row.nativeIn ?? 0n) > 0n) {
       next.sold = add(old.sold, amount); next.proceeds = add(old.proceeds, row.nativeIn!);
-      // The settled sale and the end are one store transaction, so a crash cannot leave a sold position running.
-      d.store.tradeStop(j, old, { ...next, buy: null, done: { kind: 'tp', at: d.now(), value: row.nativeIn!.toString(), ...(p.floor ? { line: p.floor } : {}) } }, REASONS.tp);
+      // Rounds spec 1.3: the settled sale and the next round's reset are one compare-and-set; the job keeps running.
+      const settled: TradeState = { ...next, buy: null, failures: 0 }, n = old.round ?? 1;
+      if (d.store.saveTrade(j, old, { ...settled, ...roundReset(settled, d.now()) })) update(d, j, `Take profit sold round ${n}. Round ${n + 1} starts after a 60 s pause.`);
       return;
     } else if (row.verdict === 'refunded') fail();
     else return bad();
@@ -227,7 +230,7 @@ export async function tickTrade(d: WorkerDeps, j: Job, ops: GuardedOps) {
   let cur = old;
   // 2c. Stop loss, only with a receipt-proven position (9.4 entry guard).
   if (s.strategy === 'dca' && px) {
-    const h = big(old.bought) - big(old.sold), k = big(old.spent) + big(old.gasBuy);
+    const h = big(old.bought) - big(old.sold), k = roundBasis(old).k;
     const value = h > 0n ? outGivenIn(h, big(px.token), big(px.wnear), pair.pin.feeBps) : 0n;
     const breach = s.slBps > 0 && h > 0n && value * 10_000n <= k * BigInt(10_000 - s.slBps);
     const prev = old.protect && old.protect.since >= runningSince ? old.protect : null;
@@ -272,8 +275,9 @@ function planBuy(d: WorkerDeps, j: Job, from: TradeState, base: TradeState, amou
 async function planDca(d: WorkerDeps, j: Job, s: Dca, pair: TradePair, from: TradeState, px: Sample, now: number,
   stop: (from: TradeState, base: TradeState, kind: DoneKind, extra?: { value?: string; line?: string }, reason?: string) => boolean) {
   const fee = pair.pin.feeBps, rW = big(px.wnear), rT = big(px.token), order = big(s.order);
-  // 1. Base buy at market, guarded like a Schedule slot.
+  // 1. Base buy at market, guarded like a Schedule slot; after a take profit, not before the round's 60 s pause (rounds spec 1.4).
   if (!from.p0) {
+    if (from.cooldownUntil != null && now < from.cooldownUntil) { update(d, j, `Next round at ${new Date(from.cooldownUntil).toISOString()}.`); return; }
     const wait = medianWait(samples(d.store, pair), now, px);
     if (wait) { update(d, j, wait); return; }
     planBuy(d, j, from, from, big(s.base), outGivenIn(big(s.base), rW, rT, fee), {}, now);
@@ -289,7 +293,7 @@ async function planDca(d: WorkerDeps, j: Job, s: Dca, pair: TradePair, from: Tra
   }
   const next: TradeState = { ...from, levels };
   // 3. Take profit on the whole position, before levels. The sale is always of H with the full line as its floor.
-  const h = big(from.bought) - big(from.sold), k = big(from.spent) + big(from.gasBuy), line = tpLine(k, s.tpBps), quote = outGivenIn(h, rT, rW, fee);
+  const round = roundBasis(from), h = big(from.bought) - big(from.sold), line = tpLine(round.k, s.tpBps), quote = outGivenIn(h, rT, rW, fee);
   if (h > 0n && quote >= line) {
     const snap = await readHoldings(d.rpc, boundWallet(j).agentAccount, [WNEAR, pair.token]), done = { value: quote.toString(), line: line.toString() };
     if ((snap.tokens[pair.token] ?? 0n) < h) { stop(from, next, 'tp-short', done); return; }
@@ -306,7 +310,7 @@ async function planDca(d: WorkerDeps, j: Job, s: Dca, pair: TradePair, from: Tra
   }
   // 4. One level fire per evaluation, the shallowest armed level that is crossed.
   const fire = levels.findIndex((l, i) => l === 'armed' && crossed(i + 1));
-  if (fire >= 0 && big(from.spent) + order <= tradePlan(s)) {
+  if (fire >= 0 && round.spent + order <= tradePlan(s)) {
     planBuy(d, j, from, next, order, tokens, { level: fire + 1 }, now, levelNeed(order, p0, fire + 1, s.stepBps));
     return;
   }
@@ -337,6 +341,8 @@ export function tradeView(store: Store, j: Job, holdings: Holdings | null, now: 
   const zero = { spent: '0', bought: '0', sold: '0', proceeds: '0', gasBuy: '0', gasSell: '0', wnear: '0' };
   const ledger = st ? { spent: st.spent, bought: st.bought, sold: st.sold, proceeds: st.proceeds, gasBuy: st.gasBuy, gasSell: st.gasSell, wnear: st.wnear } : zero;
   const px = tradeSpot(store, pair, now), h = big(ledger.bought) - big(ledger.sold), k = big(ledger.spent) + big(ledger.gasBuy);
+  // Rounds spec 2: the current round's basis for the entry, take profit and stop loss; the ledger and PnL stay the job's.
+  const round = roundBasis({ ...ledger, roundBase: st?.roundBase }), dca = s !== 'invalid' && s.strategy === 'dca';
   const value = px && st ? outGivenIn(h, big(px.token), big(px.wnear), fee) : null;
   const held = holdings?.tokens[pair.token];
   const walletValue = px && held !== undefined ? outGivenIn(held, big(px.token), big(px.wnear), fee) : null;
@@ -348,7 +354,7 @@ export function tradeView(store: Store, j: Job, holdings: Holdings | null, now: 
     strategy: j.kind as 'schedule' | 'dca',
     pair: { id: pair.id, symbol: pair.symbol, token: pair.token, decimals: pair.decimals, poolId: pair.pin.poolId, feeBps: fee },
     settings: s, endsAt: tradeEndsAt(j), ledger,
-    avgCost: big(ledger.bought) > 0n ? { num: ledger.spent, den: ledger.bought } : null,
+    avgCost: h > 0n ? { num: round.spent.toString(), den: h.toString() } : !st?.roundBase && big(ledger.bought) > 0n ? { num: ledger.spent, den: ledger.bought } : null,
     spot: px ? { num: px.wnear, den: px.token } : null,
     value: value?.toString() ?? null, walletValue: walletValue?.toString() ?? null,
     pnl: value === null ? null : (big(ledger.proceeds) + value - k - big(ledger.gasSell)).toString(),
@@ -362,14 +368,16 @@ export function tradeView(store: Store, j: Job, holdings: Holdings | null, now: 
         return { k: i + 1, price: p0 ? { num: (p0.num * f.num).toString(), den: (p0.den * f.den).toString() } : null,
           need: p0 ? levelNeed(big(s.order), p0, i + 1, s.stepBps).toString() : null, state: st?.levels[i] ?? 'waiting' as const };
       }),
-      tpLine: p0 ? tpLine(k, s.tpBps).toString() : null, slLine: p0 && s.slBps > 0 ? (k * BigInt(10_000 - s.slBps) / 10_000n).toString() : null,
-      protect: st?.protect ?? null } : null,
+      tpLine: p0 ? tpLine(round.k, s.tpBps).toString() : null, slLine: p0 && s.slBps > 0 ? (round.k * BigInt(10_000 - s.slBps) / 10_000n).toString() : null,
+      protect: st?.protect ?? null,
+      round: st?.round ?? 1, roundStartAt: st?.roundBase?.at ?? null, roundSpent: round.spent.toString(), cooldownUntil: st?.cooldownUntil ?? null, rounds: [...(st?.rounds ?? [])].reverse() } : null,
     buys: store.jobOps(j.id).filter(o => o.purpose === 'strategy' && (o.kind === 'wrap' || o.kind === 'swap')).map(o => {
       const i = JSON.parse(o.request) as Intent, side = o.kind === 'wrap' || i.receiver === WNEAR ? 'buy' as const : 'sell' as const;
       const out = receipt(o).output?.[pair.token];
       return { opId: o.id, kind: o.kind as 'wrap' | 'swap', side, amount: o.kind === 'wrap' ? i.deposit : String(i.args?.amount ?? '0'), verdict: o.verdict,
         used: o.used?.toString() ?? null, out: o.kind === 'swap' && side === 'buy' && typeof out === 'string' ? out : null,
-        nativeIn: side === 'sell' && o.nativeIn !== null ? o.nativeIn.toString() : null, txHash: o.txHash, message: o.message, at: o.createdAt };
+        nativeIn: side === 'sell' && o.nativeIn !== null ? o.nativeIn.toString() : null, txHash: o.txHash, message: o.message, at: o.createdAt,
+        ...(dca ? { round: st ? roundOf(st, o.createdAt) : 1 } : {}) };
     }),
     done: st?.done ?? null,
   };

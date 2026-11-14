@@ -647,7 +647,7 @@ test('15.6 a row-less step older than 120 s is dropped and the guard runs again,
   assert.equal(h.state(id).gasBuy, (WRAP_GAS + REFUND_GAS + SWAP_GAS).toString());
 });
 
-test('15.7 DCA: base buy and P0, TP line from the measured gas, TP sale with the full line as floor ends tp and pays the owner', async t => {
+test('15.7 DCA: base buy and P0, TP line from the measured gas, TP sale with the full line as floor starts round 2 and keeps running; Stop and withdraw pays the owner', async t => {
   const h = setup(t, { kind: 'dca' }), { id, path } = await h.run();
   h.history(); await buy(h, id);
   const s = h.state(id);
@@ -661,11 +661,22 @@ test('15.7 DCA: base buy and P0, TP line from the measured gas, TP sale with the
   assert.equal(sale.side, 'sell'); assert.equal(sale.floor, '106384180000000000000000', 'the sale floor is the full TP line'); assert.equal(sale.amount, s.bought);
   await h.tick(id);
   assert.ok(minOfCall(swaps(h).at(-1)!) >= 106384180000000000000000n);
-  assert.equal(h.job(id).state, 'stopping'); assert.equal(h.state(id).done?.kind, 'tp');
-  assert.equal(h.state(id).gasSell, SALE_GAS.toString()); assert.equal(BigInt(h.state(id).spent) + BigInt(h.state(id).gasBuy), near('0.101812'), 'sale gas stays outside K');
-  const view = (await h.request(path)).data as { trade: { done: { kind: string }; buys: { side: string; verdict: string }[] } };
-  assert.equal(view.trade.done.kind, 'tp'); assert.deepEqual(view.trade.buys.map(b => `${b.side}:${b.verdict}`), ['sell:swapped', 'buy:swapped', 'buy:success']);
-  assert.ok(BigInt(h.state(id).proceeds) > BigInt(h.state(id).spent), 'the sale returned more NEAR than the buy spent');
+  // Rounds spec 1.3: the settled sale starts round 2 in the same compare-and-set; nothing ends.
+  const r2 = h.state(id), at = h.now();
+  assert.equal(h.job(id).state, 'running'); assert.equal(r2.done, null);
+  assert.equal(r2.gasSell, SALE_GAS.toString()); assert.equal(BigInt(r2.spent) + BigInt(r2.gasBuy), near('0.101812'), 'sale gas stays outside K');
+  assert.deepEqual([r2.round, r2.roundBase, r2.cooldownUntil, r2.p0, r2.levels, r2.protect, r2.pending, r2.buy, r2.failures],
+    [2, { spent: r2.spent, gasBuy: r2.gasBuy, gasSell: r2.gasSell, proceeds: r2.proceeds, at }, at + MIN, null, ['waiting'], null, null, null, 0]);
+  assert.deepEqual(r2.rounds, [{ n: 1, from: null, at, spent: near('0.1').toString(), gasBuy: (near('0.101812') - near('0.1')).toString(), gasSell: SALE_GAS.toString(), proceeds: r2.proceeds, filled: 0 }]);
+  assert.equal(h.job(id).reason, 'Take profit sold round 1. Round 2 starts after a 60 s pause.');
+  assert.equal(h.worker.openAlerts(id).some(a => a.kind === 'trade_done'), false, 'no end alert: the job did not end');
+  const view = (await h.request(path)).data as { trade: { done: null; avgCost: unknown; buys: { side: string; verdict: string; round: number | null }[];
+    dca: { round: number; roundStartAt: number; roundSpent: string; cooldownUntil: number; rounds: unknown[]; tpLine: string | null } } };
+  assert.equal(view.trade.done, null); assert.deepEqual(view.trade.buys.map(b => `${b.side}:${b.verdict}:${b.round}`), ['sell:swapped:1', 'buy:swapped:1', 'buy:success:1']);
+  assert.deepEqual([view.trade.dca.round, view.trade.dca.roundStartAt, view.trade.dca.roundSpent, view.trade.dca.cooldownUntil, view.trade.dca.rounds, view.trade.avgCost, view.trade.dca.tpLine],
+    [2, at, '0', at + MIN, r2.rounds, null, null]);
+  assert.ok(BigInt(r2.proceeds) > BigInt(r2.spent), 'the sale returned more NEAR than the buy spent');
+  assert.equal((await h.request(`${path}/stop`, {})).status, 200);
   await until(h, id, () => h.job(id).state === 'stopped');
   assert.ok(h.ownerBal.native! > h.deposit - near('0.02'), 'the owner received the NEAR');
   assert.equal(h.bal[USDC], 0n);
@@ -800,7 +811,75 @@ test('15.7 DCA all levels filled, then take profit on the whole position', async
   await h.tick(id);
   assert.equal(h.state(id).pending?.amount, h.state(id).bought);
   await h.tick(id);
-  assert.equal(h.state(id).done?.kind, 'tp');
+  assert.deepEqual([h.job(id).state, h.state(id).done, h.state(id).round, h.state(id).rounds?.[0]?.filled, h.state(id).rounds?.[0]?.spent], ['running', null, 2, 1, near('0.2').toString()]);
+});
+
+test('ROUNDS 1.2 to 1.4: the 60 s pause, round 2 on its own basis K_r, a second take profit at the exact round-2 line, and a round-2 stop loss', async t => {
+  const h = setup(t, { kind: 'dca', trade: { ...DCA, slBps: 1000 } }), { id, path } = await h.run();
+  h.history(); await buy(h, id);
+  h.setReserve(USDC, h.reserve(USDC) * 100n / 110n);
+  await h.tick(id); await h.tick(id);
+  const r1 = h.state(id), at = h.now();
+  assert.equal(r1.round, 2);
+  // The pause: the once-a-minute gate is reset so that each instant is evaluated.
+  const gate = () => h.worker.setMeta(`trade_eval:${id}`, '0');
+  h.at(at + MIN - 1); h.history(); gate(); await advanceJob(h.d, id);
+  assert.equal(h.state(id).pending, null); assert.equal(h.job(id).reason, `Next round at ${new Date(at + MIN).toISOString()}.`);
+  h.at(at + MIN); h.history(); gate(); await advanceJob(h.d, id);
+  assert.equal(h.state(id).pending?.kind, 'wrap', 'the base buy of round 2 is planned at the end of the pause');
+  await buy(h, id);
+  const r2 = h.state(id), base = r2.roundBase!, k2 = BigInt(r2.spent) - BigInt(base.spent) + BigInt(r2.gasBuy) - BigInt(base.gasBuy);
+  assert.equal(BigInt(r2.spent) - BigInt(base.spent), near('0.1'), 'round 2 spent its base only');
+  assert.deepEqual(r2.p0, { num: near('0.1').toString(), den: (BigInt(r2.bought) - BigInt(r2.sold)).toString() });
+  // The view shows round 2's entry, take profit and stop loss lines from K_r, and the job's PnL from the whole ledger.
+  const v = (await h.request(path)).data as { trade: { avgCost: { num: string; den: string }; pnl: string; value: string; buys: { round: number | null }[];
+    dca: { tpLine: string; slLine: string; round: number; roundSpent: string } } };
+  assert.deepEqual([v.trade.dca.round, v.trade.dca.roundSpent, v.trade.avgCost.num, v.trade.dca.tpLine, v.trade.dca.slLine],
+    [2, near('0.1').toString(), near('0.1').toString(), tpLine(k2, 150).toString(), (k2 * 9_000n / 10_000n).toString()]);
+  assert.equal(v.trade.buys[0]!.round, 2);
+  assert.equal(v.trade.pnl, (BigInt(r2.proceeds) + BigInt(v.trade.value) - BigInt(r2.spent) - BigInt(r2.gasBuy) - BigInt(r2.gasSell)).toString(), 'the job PnL stays on the whole ledger');
+  // A second take profit fires at the round-2 line; the cumulative basis is about twice as large and would never be reached.
+  const held = BigInt(r2.bought) - BigInt(r2.sold), cumulative = BigInt(r2.spent) + BigInt(r2.gasBuy);
+  h.setReserve(USDC, h.reserve(USDC) * 100n / 110n);
+  const quote = h.ret(held, USDC, WNEAR);
+  assert.ok(quote >= tpLine(k2, 150) && quote < tpLine(cumulative, 150));
+  await h.tick(id);
+  assert.equal(h.state(id).pending?.side, 'sell'); assert.equal(h.state(id).pending?.amount, held.toString()); assert.equal(h.state(id).pending?.floor, tpLine(k2, 150).toString());
+  await h.tick(id);
+  const r3 = h.state(id);
+  assert.equal(r3.round, 3); assert.equal(r3.rounds?.length, 2);
+  assert.deepEqual({ ...r3.rounds![1]!, at: 0, from: 0 }, { n: 2, from: 0, at: 0, spent: near('0.1').toString(), gasBuy: (k2 - near('0.1')).toString(), gasSell: SALE_GAS.toString(),
+    proceeds: (BigInt(r3.proceeds) - BigInt(base.proceeds)).toString(), filled: 0 });
+  assert.equal(r3.rounds![1]!.from, base.at);
+  assert.deepEqual(((await h.request(path)).data as { trade: { dca: { rounds: { n: number }[] } } }).trade.dca.rounds.map(r => r.n), [2, 1], 'completed rounds newest first');
+});
+
+test('ROUNDS 1.2: a round-2 stop loss compares the position with K_r, not the cumulative basis', async t => {
+  const h = setup(t, { kind: 'dca', trade: { ...DCA, slBps: 1000 } }), { id } = await h.run();
+  h.history(); await buy(h, id);
+  h.setReserve(USDC, h.reserve(USDC) * 100n / 110n);
+  await h.tick(id); await h.tick(id);
+  assert.equal(h.state(id).round, 2);
+  h.skip(MIN); h.history(); await buy(h, id);
+  await h.tick(id);
+  assert.equal(h.state(id).protect, null, 'at the round-2 entry price there is no breach, although the cumulative basis is twice as large');
+  h.setReserve(USDC, h.reserve(USDC) * 100n / 85n); await h.tick(id);
+  assert.ok(h.state(id).protect, 'a 15 % fall from the round-2 entry is a breach');
+  assert.equal(h.state(id).pending?.level, 1, 'round 2 fires its own level 1; the plan check uses the round spent');
+});
+
+test('ROUNDS 1.1: a state stored before rounds (no round fields) plans, sells and saves as round 1', async t => {
+  const h = setup(t, { kind: 'dca' }), { id } = await h.run();
+  h.history(); await buy(h, id);
+  const st = h.state(id);
+  assert.equal(['round', 'roundBase', 'cooldownUntil', 'rounds'].some(k => Object.hasOwn(st, k)), false, 'a new job stores no round fields before its first take profit');
+  await h.tick(id);
+  assert.deepEqual(h.state(id).levels, ['armed'], 'the legacy state saved');
+  h.setReserve(USDC, h.reserve(USDC) * 100n / 110n);
+  await h.tick(id);
+  assert.equal(h.state(id).pending?.floor, tpLine(BigInt(st.spent) + BigInt(st.gasBuy), 150).toString(), 'round 1 uses the whole ledger, exactly as before');
+  await h.tick(id);
+  assert.equal(h.state(id).round, 2);
 });
 
 test('15.7b tick order: a wrap settled 1 s before the end never journals its swap; stop loss drops a row-less swap; the life end needs no pool', async t => {
@@ -900,7 +979,7 @@ test('15.8 receipts: partial resolve and a rerouted omft payout are unclear and 
 });
 
 test('15.8 quota and frozen re-issue the same step with a new id; a wallet inflow never changes the ledger; the owner token is never sold', async t => {
-  const h = setup(t, { kind: 'dca' }), { id } = await h.run();
+  const h = setup(t, { kind: 'dca' }), { id, path } = await h.run();
   h.history(); await h.tick(id);
   const p = h.state(id).pending!;
   h.setMode('quota'); await h.tick(id); h.setMode('normal');
@@ -927,6 +1006,8 @@ test('15.8 quota and frozen re-issue the same step with a new id; a wallet inflo
   await h.tick(id);
   assert.equal(h.state(id).pending?.amount, bought, 'the sale is of H only');
   await h.tick(id);
+  assert.deepEqual([h.state(id).round, h.bal[USDC]], [2, 777n], 'the next round starts; the owner token stays in the wallet');
+  assert.equal((await h.request(`${path}/stop`, {})).status, 200);
   await until(h, id, () => h.job(id).state === 'stopped');
   assert.equal(h.ownerBal[USDC], 777n, 'the token the owner added goes back at exit');
 });
@@ -1541,7 +1622,7 @@ test('MERGE b: the watchdog verifies the trade wrap, swap in and take-profit sal
     assert.deepEqual(await pass(), [], `${pair} swap in`);
     h.setReserve(token, h.reserve(token) * 100n / 110n);
     await h.tick(id); await h.tick(id);
-    assert.equal(h.state(id).done?.kind, 'tp'); assert.equal(h.job(id).state, 'stopping');
+    assert.equal(h.state(id).round, 2); assert.equal(h.job(id).state, 'running');
     assert.deepEqual(await pass(), [], `${pair} take-profit sale with unwrap: no verification_error`);
     assert.equal(h.watch.watchWaiting(id), false);
     assert.equal(dcl, 0, `${pair}: no DCL read for a trade wallet`);

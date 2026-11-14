@@ -254,6 +254,28 @@ test('15.11 formatting and the account row: tokenAmount for 18 and 8 decimals, R
   assert.equal(tradeRowValue(tradeJob({ walletValue: null })), '-');
 });
 
+test('ROUNDS 4: a round-3 job shows ROUND 3, completed rounds newest first with their gross results, each buy in its round, and no earlier sale on the current take profit row', () => {
+  const base = tradeJob().trade!;
+  const rounds = [{ n: 2, from: 50, at: 80, spent: near('0.1'), gasBuy: near('0.002'), gasSell: near('0.003'), proceeds: near('0.105'), filled: 0 },
+    { n: 1, from: null, at: 40, spent: near('0.2'), gasBuy: near('0.004'), gasSell: near('0.003'), proceeds: near('0.21'), filled: 1 }];
+  const buy = (opId: string, at: number, round: number) => ({ opId, kind: 'swap' as const, side: 'buy' as const, amount: near('0.1'), verdict: 'swapped', used: near('0.1'), out: '9792988176548991243',
+    nativeIn: null, txHash: `tx-${opId}`, message: null, at, round });
+  const job = tradeJob({ ledger: { ...base.ledger, spent: near('0.4'), proceeds: near('0.315') }, dca: { ...base.dca!, round: 3, roundStartAt: 80, roundSpent: near('0.1'), cooldownUntil: 140, rounds },
+    buys: [buy('b3', 90, 3), { opId: 's2', kind: 'swap', side: 'sell', amount: '9792988176548991243', verdict: 'swapped', used: '9792988176548991243', out: null, nativeIn: near('0.105'),
+      txHash: 'tx-sale-2', message: null, at: 79, round: 2 }, buy('b2', 60, 2), buy('b1', 10, 1)] });
+  const orders = renderToStaticMarkup(React.createElement(NearTradeDetail, { job }));
+  assert.match(orders, /ROUND 3/); assert.doesNotMatch(orders, /tx-sale-2/, 'the take profit row shows no sale of an earlier round'); assert.match(orders, /tx-b3/);
+  const roundsTab = renderToStaticMarkup(React.createElement(NearTradeDetail, { job, tab: 'Rounds' }));
+  assert.match(roundsTab, /2 completed · realised \+0\.015000 NEAR/);
+  assert.ok(roundsTab.indexOf('Round 3') < roundsTab.indexOf('Round 2') && roundsTab.indexOf('Round 2') < roundsTab.indexOf('Round 1'), 'current round first, then newest first');
+  const ongoing = renderToStaticMarkup(React.createElement(NearTradeDetail, { job, tab: 'Ongoing' }));
+  assert.match(ongoing, /Round 3 · Step 1% · TP 1\.5%/);
+  const log = renderToStaticMarkup(React.createElement(NearTradeDetail, { job, tab: 'Order history' }));
+  assert.equal(log.match(/<span>Base<\/span>/g)?.length, 3, 'the first buy of each round is its base');
+  // An older server without round fields renders as before.
+  assert.match(renderToStaticMarkup(React.createElement(NearTradeDetail, { job: tradeJob() })), /ROUND 1/);
+});
+
 test('15.11 no em dash in the new copy', () => {
   for (const file of ['web/components/near/NearTradeDeployScreen.tsx', 'web/components/near/NearTradeDetail.tsx']) assert.equal(readFileSync(file, 'utf8').includes(EM_DASH), false, file);
 });

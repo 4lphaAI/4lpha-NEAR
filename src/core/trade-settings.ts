@@ -109,6 +109,33 @@ export function levelNeed(order: bigint, p0: { num: bigint; den: bigint }, k: nu
   return (n + d - 1n) / d;
 }
 
+/** Rounds spec 1.1 (docs/specs/TRADE-V1-DCA-ROUNDS-SPEC.md): a completed Auto DCA round with its own amounts (cumulative after, minus the round's base). */
+export interface DcaRound { n: number; from: number | null; at: number; spent: string; gasBuy: string; gasSell: string; proceeds: string; filled: number; }
+export type RoundBase = { spent: string; gasBuy: string; gasSell: string; proceeds: string; at: number };
+/** The ledger fields the live state and the demo simulation share. A state without `round` is round 1 with a zero base. */
+interface RoundLedger { spent: string; gasBuy: string; gasSell: string; proceeds: string; levels: readonly string[]; round?: number; roundBase?: RoundBase; rounds?: DcaRound[]; }
+/** As the BSC product: the next round's base buy waits 60 s after a take profit. */
+export const ROUND_COOLDOWN_MS = 60_000;
+const ROUNDS_KEPT = 20;
+/** Rounds spec 1.2: the current round's spent and its basis K_r. */
+export function roundBasis(st: Pick<RoundLedger, 'spent' | 'gasBuy' | 'roundBase'>): { spent: bigint; k: bigint } {
+  const spent = big(st.spent) - big(st.roundBase?.spent ?? '0');
+  return { spent, k: spent + big(st.gasBuy) - big(st.roundBase?.gasBuy ?? '0') };
+}
+/** Rounds spec 1.3: what a settled take-profit sale sets on the state, whose amounts already include the sale. */
+export function roundReset(st: RoundLedger, now: number) {
+  const n = st.round ?? 1, own = (k: 'spent' | 'gasBuy' | 'gasSell' | 'proceeds') => (big(st[k]) - big(st.roundBase?.[k] ?? '0')).toString();
+  const done: DcaRound = { n, from: st.roundBase?.at ?? null, at: now, spent: own('spent'), gasBuy: own('gasBuy'), gasSell: own('gasSell'), proceeds: own('proceeds'),
+    filled: st.levels.filter(l => l === 'filled').length };
+  return { rounds: [...(st.rounds ?? []), done].slice(-ROUNDS_KEPT), round: n + 1, roundBase: { spent: st.spent, gasBuy: st.gasBuy, gasSell: st.gasSell, proceeds: st.proceeds, at: now },
+    cooldownUntil: now + ROUND_COOLDOWN_MS, p0: null, levels: st.levels.map(() => 'waiting' as const), protect: null };
+}
+/** Rounds spec 2: the round of an operation created at `at`; the settling sale (created before the reset) belongs to the round it ended. */
+export function roundOf(st: Pick<RoundLedger, 'round' | 'roundBase' | 'rounds'>, at: number): number | null {
+  if (!st.roundBase || at > st.roundBase.at) return st.round ?? 1;
+  return st.rounds?.find(r => (r.from === null || at > r.from) && at <= r.at)?.n ?? null;
+}
+
 /**
  * Spec 7.3: at least 10 samples aged 30 s to 30 min, and the spot within 2 % of their median. The lower median of an even count is used,
  * so pushing the token dearer needs 6 of 10 samples (RR-4); a cheaper token only helps the buyer. Returns the wait reason, or null.

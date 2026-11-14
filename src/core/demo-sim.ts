@@ -8,7 +8,7 @@ import type { LpLedger, LpRange, LpSettings } from './lp.js';
 import { PAIRS, USDC, WNEAR, validPoint } from './pins.js';
 import { DCL_POOL, limitProceeds, otherToken, toNearDown, type DclToken } from './rhea-dcl.js';
 import { TRADE_PAIRS, type TradePair } from './trade-pairs.js';
-import { levelNeed, medianWait, outGivenIn, tpLine, TRADE_RESERVE, tradePlan, tradeSettingsFromRequest, type Sample, type TradeSettings } from './trade-settings.js';
+import { levelNeed, medianWait, outGivenIn, roundBasis, roundReset, tpLine, TRADE_RESERVE, tradePlan, tradeSettingsFromRequest, type DcaRound, type RoundBase, type Sample, type TradeSettings } from './trade-settings.js';
 
 // Demo mode (docs/specs/DEMO-MODE-SPEC.md): a simulation that applies the live rules and constants through shared pure functions to simulated
 // balances. It signs nothing and holds no key. Every value here is display money for a simulation, never a live amount.
@@ -35,6 +35,8 @@ export interface DemoTradeSim extends Common {
   native: string; wnear: string; token: string; spent: string; bought: string; sold: string; proceeds: string; gasBuy: string; gasSell: string;
   fills: number; lastSlot: number | null; anchor: number; buy: { amount: string; floor: string; slot?: number; level?: number } | null;
   p0: { num: string; den: string } | null; levels: ('waiting' | 'armed' | 'filled' | 'skipped')[]; protect: { since: number; block: number } | null;
+  /** Auto DCA rounds, as the live state (docs/specs/TRADE-V1-DCA-ROUNDS-SPEC.md 3). Absent: round 1. */
+  round?: number; roundBase?: RoundBase; cooldownUntil?: number | null; rounds?: DcaRound[];
 }
 export type DemoSim = DemoGridSim | DemoLpSim | DemoTradeSim;
 export interface DemoAgent {
@@ -307,7 +309,7 @@ function trade(a: DemoAgent, t: TradeSettings, s: DemoTradeSim | null, m: DemoMa
   const rW = b(px.wnear), rT = b(px.token);
   // Stop loss, only with a held position (live guard, trade.ts): confirmed by the same breach 5 to 30 minutes later at a later block.
   if (t.strategy === 'dca') {
-    const h = b(s.bought) - b(s.sold), k = b(s.spent) + b(s.gasBuy), value = h > 0n ? outGivenIn(h, rT, rW, fee) : 0n;
+    const h = b(s.bought) - b(s.sold), k = roundBasis(s).k, value = h > 0n ? outGivenIn(h, rT, rW, fee) : 0n;
     const breach = t.slBps > 0 && h > 0n && value * 10_000n <= k * BigInt(10_000 - t.slBps), prev = s.protect;
     if (breach && prev && now - prev.since >= SL_CONFIRM_MS && now - prev.since <= SL_RESET_MS && px.block > prev.block) { stop(w, s, 'sl', now); return s; }
     s.protect = breach ? prev && now - prev.since <= SL_RESET_MS ? prev : { since: now, block: px.block } : null;
@@ -345,8 +347,9 @@ function trade(a: DemoAgent, t: TradeSettings, s: DemoTradeSim | null, m: DemoMa
     plan(b(t.amount), outGivenIn(b(t.amount), rW, rT, fee), { slot });
     return s;
   }
-  // Auto DCA, as live planDca: base buy, arming, take profit, one level fire.
+  // Auto DCA, as live planDca: base buy (after a take profit, not before the round's 60 s pause), arming, take profit, one level fire.
   if (!s.p0) {
+    if (s.cooldownUntil != null && now < s.cooldownUntil) { s.status = `Next round at ${new Date(s.cooldownUntil).toISOString()}.`; return s; }
     const wait = medianWait(list, now, px);
     if (wait) { s.status = wait; return s; }
     plan(b(t.base), outGivenIn(b(t.base), rW, rT, fee), {});
@@ -358,17 +361,20 @@ function trade(a: DemoAgent, t: TradeSettings, s: DemoTradeSim | null, m: DemoMa
     const k = s.levels.indexOf('waiting');
     s.levels[k] = crossed(k + 1) ? 'skipped' : 'armed';
   }
-  const h = b(s.bought) - b(s.sold), k = b(s.spent) + b(s.gasBuy), quote = outGivenIn(h, rT, rW, fee);
-  if (h > 0n && quote >= tpLine(k, t.tpBps)) {
+  const round = roundBasis(s), h = b(s.bought) - b(s.sold), quote = outGivenIn(h, rT, rW, fee);
+  if (h > 0n && quote >= tpLine(round.k, t.tpBps)) {
     if (!afford(b(s.native), SIM_GAS.swap)) { stop(w, s, 'reserve', now); return s; }
     s.token = (b(s.token) - h).toString(); s.sold = (b(s.sold) + h).toString(); s.proceeds = (b(s.proceeds) + quote).toString();
     s.native = (b(s.native) + quote - SIM_GAS.swap).toString(); s.gasSell = (b(s.gasSell) + SIM_GAS.swap).toString();
     op(w, 'swap', h, SIM_GAS.swap, { out: quote, note: TP_NOTE });
-    stop(w, s, 'tp', now);
+    // Rounds spec 3: the sale starts the next round, as live; the agent keeps running.
+    const n = s.round ?? 1;
+    Object.assign(s, roundReset(s, now));
+    s.status = `Take profit sold round ${n}. Round ${n + 1} starts after a 60 s pause.`;
     return s;
   }
   const fire = s.levels.findIndex((l, i) => l === 'armed' && crossed(i + 1));
-  if (fire >= 0 && b(s.spent) + order <= tradePlan(t)) { plan(order, tokens, { level: fire + 1 }, levelNeed(order, p0, fire + 1, t.stepBps)); return s; }
+  if (fire >= 0 && round.spent + order <= tradePlan(t)) { plan(order, tokens, { level: fire + 1 }, levelNeed(order, p0, fire + 1, t.stepBps)); return s; }
   s.status = s.levels.every(l => l === 'filled' || l === 'skipped') ? 'Waiting for take profit, stop loss or the planned end.' : 'Waiting for a level or take profit.';
   return s;
 }

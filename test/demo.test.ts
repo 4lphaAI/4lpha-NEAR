@@ -461,18 +461,33 @@ test('demo 7: Auto DCA base buy, arming and skipping, one level per evaluation, 
   assert.deepEqual([(deep.a.sim as DemoTradeSim).buy?.level, ops(deep.log)], [1, ['wrap']], 'only the shallowest crossed level');
   const p0 = { num: BigInt((f.x.sim as DemoTradeSim).p0!.num), den: BigInt((f.x.sim as DemoTradeSim).p0!.den) };
   assert.ok(outGivenIn(near('0.1'), W, T * 120n / 100n, 30) >= levelNeed(near('0.1'), p0, 2, 100), 'both levels were crossed');
-  // Take profit: the token dearer by enough sells the whole position to native NEAR and ends with tp.
+  // Take profit: the token dearer by enough sells the whole position to native NEAR and starts round 2 (rounds spec 3); the agent keeps running.
   s = a.sim as DemoTradeSim;
   const h = BigInt(s.bought) - BigInt(s.sold), line = tpLine(BigInt(s.spent) + BigInt(s.gasBuy), 150);
   t += MIN;
   const sale = await step(a, market(t, 99, { pool: poolAt(80n) }), t);
-  const native0 = BigInt(s.native), proceeds0 = BigInt(s.proceeds), quote = outGivenIn(h, T * 80n / 100n, W, 30);
+  const native0 = BigInt(s.native), proceeds0 = BigInt(s.proceeds), quote = outGivenIn(h, T * 80n / 100n, W, 30), spent1 = s.spent, gasBuy1 = s.gasBuy;
   a = sale.a; s = a.sim as DemoTradeSim;
   assert.deepEqual([ops(sale.log), sale.log.find(r => r.kind === 'op')!.data.note], [['swap'], TP_NOTE]);
-  assert.deepEqual([a.state, a.endReason, s.token, s.sold], ['stopping', 'tp', '0', h.toString()]);
+  assert.deepEqual([a.state, a.endReason, s.token, s.sold], ['running', null, '0', h.toString()]);
   assert.ok(BigInt(s.proceeds) >= line);
   // Conservation of the sale: the native balance gains the proceeds once, less the swap gas.
   assert.deepEqual([BigInt(s.native) - native0, BigInt(s.proceeds) - proceeds0], [quote - SIM_GAS.swap, quote]);
+  assert.deepEqual([s.round, s.roundBase, s.cooldownUntil, s.p0, s.levels, s.protect],
+    [2, { spent: spent1, gasBuy: gasBuy1, gasSell: s.gasSell, proceeds: s.proceeds, at: t }, t + MIN, null, ['waiting', 'waiting', 'waiting'], null]);
+  assert.deepEqual(s.rounds, [{ n: 1, from: null, at: t, spent: spent1, gasBuy: gasBuy1, gasSell: s.gasSell, proceeds: s.proceeds, filled: 2 }]);
+  // The 60 s pause, then round 2's base buy with the median guard, on a round-2 basis.
+  const paused = await step(a, market(t + MIN - 1, 100, { history: history(t + MIN - 1) }), t + MIN - 1);
+  assert.deepEqual([ops(paused.log), (paused.a.sim as DemoTradeSim).status], [[], `Next round at ${new Date(t + MIN).toISOString()}.`]);
+  t += MIN;
+  const base2 = await step(a, market(t, 101, { history: history(t) }), t);
+  assert.deepEqual(ops(base2.log), ['wrap'], 'round 2 starts with its base buy');
+  a = base2.a; t += MIN; a = (await step(a, market(t, 102, { history: history(t) }), t)).a; s = a.sim as DemoTradeSim;
+  assert.ok(s.p0); assert.equal(s.fills, 4);
+  assert.equal(BigInt(s.spent) - BigInt(spent1), near('0.1'), 'round 2 spent only its base');
+  t += MIN;
+  const sale2 = await step(a, market(t, 103, { pool: poolAt(80n) }), t);
+  assert.deepEqual([ops(sale2.log), (sale2.a.sim as DemoTradeSim).round], [['swap'], 3], 'round 2 takes profit at its own line');
   // Stop loss: no breach while nothing is held; a breach confirmed 5 minutes later at a later block ends with sl and sells nothing.
   const slSettings = tradeSettingsFromRequest('dca', { baseNear: '0.10', orderNear: '0.10', levels: 3, stepBps: 100, tpBps: 150, slBps: 1000 }, testNow) as TradeSettings;
   const empty = (await step(agentOf('dca', slSettings, tradePlan(slSettings) + TRADE_RESERVE), market(testNow, 1), testNow)).a;
@@ -837,6 +852,8 @@ test('demo 11: the public view has every key of the page Job, the fixed values o
     if (job.grid) amounts.push(job.grid.value, ...job.grid.orders.flatMap(o => [o.remain, o.bought, o.unclaimed]), ...job.grid.lanes.map(l => l.amount));
     if (job.lp) amounts.push(job.lp.valueLow, job.lp.valueHigh, job.lp.initialPosition, job.lp.positionValue, ...Object.values(job.lp.ledger!), job.lp.position!.liquidity, ...job.lp.position!.estimate!, ...job.lp.position!.fees);
     if (job.trade) amounts.push(...Object.values(job.trade.ledger), job.trade.value, job.trade.walletValue, job.trade.pnl?.replace(/^-/, ''));
+    if (body.kind === 'dca') assert.deepEqual([job.trade!.dca!.round, job.trade!.dca!.roundSpent, job.trade!.dca!.rounds, job.trade!.buys.map(b => b.round)],
+      [1, job.trade!.ledger.spent, [], job.trade!.buys.map(() => 1)], 'the demo view carries the round fields of rounds spec 2');
     for (const v of amounts) assert.match(String(v), /^\d+$/, `${body.kind}: ${String(v)}`);
     assert.equal(JSON.stringify(job).includes(a.owner), false);
   }

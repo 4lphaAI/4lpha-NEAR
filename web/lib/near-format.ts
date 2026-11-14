@@ -59,9 +59,12 @@ export interface TradeView {
   avgCost: Ratio | null; spot: Ratio | null; value: string | null; walletValue: string | null; pnl: string | null;
   schedule: { anchor: number | null; currentSlot: number | null; currentSlotTaken: boolean; fills: number; postponed: number; nextDueAt: number | null; remaining: string } | null;
   dca: { p0: Ratio | null; levels: { k: number; price: Ratio | null; need: string | null; state: TradeLevelState }[]; tpLine: string | null; slLine: string | null;
-    protect: { since: number; block: number } | null } | null;
+    protect: { since: number; block: number } | null;
+    /** Auto DCA rounds (docs/specs/TRADE-V1-DCA-ROUNDS-SPEC.md 2); absent from an older server. `rounds` are the completed ones, newest first. */
+    round?: number; roundStartAt?: number | null; roundSpent?: string; cooldownUntil?: number | null;
+    rounds?: { n: number; from: number | null; at: number; spent: string; gasBuy: string; gasSell: string; proceeds: string; filled: number }[] } | null;
   buys: { opId: string; kind: 'wrap' | 'swap'; side: 'buy' | 'sell'; amount: string; verdict: string | null; used: string | null; out: string | null; nativeIn: string | null;
-    txHash: string | null; message: string | null; at: number }[];
+    txHash: string | null; message: string | null; at: number; round?: number | null }[];
   done: { kind: 'budget' | 'runs' | 'date' | 'life' | 'tp' | 'tp-cap' | 'tp-short' | 'sl'; at: number; value?: string; line?: string } | null;
 }
 

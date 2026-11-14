@@ -49,7 +49,7 @@ export function hireText(model: 'schedule' | 'dca'): string[] {
   return [
     'Real funds. Your deposit is the plan plus a 0.4 NEAR reserve, which pays gas and comes back minus gas.',
     'The bought token waits in the agent wallet. It is protected by key custody only, and the watchdog only alerts on this page.',
-    ...(model === 'dca' ? ['Take profit sells the position to NEAR, except when the position is too large for one sale, when its NEAR would exceed the signed daily limit, or when the wallet holds less than the agent bought: then the job ends without selling and returns the token.',
+    ...(model === 'dca' ? ['Take profit sells the position to NEAR and a new round starts 60 seconds later, until the planned end, a stop loss or your stop. If the position is too large for one sale, its NEAR would exceed the signed daily limit, or the wallet holds less than the agent bought, the job ends without selling and returns the token.',
       'Stop loss does not sell.'] : []),
     'Every end pays you NEAR plus the token.',
     'You choose these settings; the policy is signed.',

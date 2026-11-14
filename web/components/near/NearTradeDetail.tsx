@@ -217,12 +217,15 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
 
   // An Auto DCA round's fills in time order: the first successful buy is the base order, each later one a filled level in level order.
   const fills = t.buys.filter(b => b.kind === "swap" && b.side === "buy" && b.out !== null).sort((a, b) => a.at - b.at);
+  // Auto DCA rounds (rounds spec 4): the current round's fills; every buy when an older server sends no round.
+  const round = t.dca?.round ?? 1, inRound = (b: TradeView["buys"][number]) => b.round === undefined || b.round === round;
+  const roundFills = fills.filter(inRound);
   const filledKs = (t.dca?.levels ?? []).filter(v => v.state === "filled").map(v => v.k);
   const orderLabel = (b: TradeView["buys"][number]): string => {
     if (b.kind === "wrap") return "Wrap";
     if (b.side === "sell") return "Take profit";
-    const i = fills.indexOf(b);
-    return i === 0 ? "Base" : i > 0 ? (filledKs[i - 1] === undefined ? "DCA" : `DCA #${filledKs[i - 1]}`) : "Buy";
+    const i = fills.filter(f => f.round === b.round).indexOf(b);
+    return i === 0 ? "Base" : i > 0 ? (!inRound(b) || filledKs[i - 1] === undefined ? "DCA" : `DCA #${filledKs[i - 1]}`) : "Buy";
   };
   // A successful wrap is only the step before its swap, so it is not a row of its own; a failed one is.
   const shown = t.buys.filter(b => b.kind !== "wrap" || b.verdict !== "success");
@@ -238,7 +241,7 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
       return <div key={b.opId} data-verdict={b.verdict ?? "pending"} style={refunded ? { border: "1px solid var(--warning)" } : failed ? { border: "1px solid var(--loss)" } : { borderTop: "1px solid var(--line-1)" }}>
         <div className="fl-row" style={{ gridTemplateColumns: FILL_COLS, alignItems: "center", cursor: "default", font: "var(--weight-medium) var(--text-sm)/1.2 var(--font-sans)", color: "var(--ink-1)" }}>
           <span>{new Date(b.at).toLocaleString("en-US")}</span>
-          <span>1</span>
+          <span>{b.round === undefined ? 1 : b.round ?? "-"}</span>
           <span>{orderLabel(b)}</span>
           <span style={{ color: b.side === "buy" ? "var(--profit)" : "var(--loss)" }}>{b.kind === "wrap" ? "-" : b.side}</span>
           <span>{fillPrice ? `${ratioPrice(fillPrice, dec)} NEAR` : <span style={{ padding: "3px 9px", borderRadius: 999, border: `1px solid ${tone}`, color: tone, font: "var(--weight-medium) var(--text-xs)/1.4 var(--font-mono)" }}>{b.verdict ?? "pending"}</span>}</span>
@@ -342,14 +345,22 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
     const tpPrice = linePrice(d.tpLine, held), slPrice = s.slBps === 0 ? null : linePrice(d.slLine, held);
     const px = (r: Ratio | null) => r === null ? "-" : `${ratioPrice(r, dec)} NEAR`;
     const inverse = (r: Ratio | null) => r !== null && sym === "USDC" ? `${ratioPrice(r, dec, true)} USDC per NEAR` : undefined;
-    const sale = t.buys.find(b => b.kind === "swap" && b.side === "sell" && b.nativeIn !== null);
+    const sale = t.buys.find(b => b.kind === "swap" && b.side === "sell" && b.nativeIn !== null && inRound(b));
+    const cooling = !t.done && d.cooldownUntil != null && d.cooldownUntil > now && BigInt(held) === 0n;
+    const past = d.rounds ?? [], gross = (r: { proceeds: string; spent: string }) => BigInt(r.proceeds) - BigInt(r.spent);
+    // Exact beyond the 20 kept rounds: every completed round sold all it bought, so their gross is the job's proceeds against the spend before this round.
+    const completed = d.roundSpent === undefined ? 0 : round - 1;
+    const realised = completed > 0 ? signed((BigInt(l.proceeds) - BigInt(l.spent) + BigInt(d.roundSpent!)).toString()) : t.done?.kind === "tp" ? signed(t.pnl) : "-";
+    // The open round's gross result at the pool price; a job that ended at take profit before rounds keeps the job figure.
+    const roundPnl = d.roundSpent === undefined || t.done?.kind === "tp" ? t.pnl : t.value === null ? null : (BigInt(t.value) - BigInt(d.roundSpent)).toString();
+    const toneOf = (v: string | null) => v === null || BigInt(v) === 0n ? "normal" : BigInt(v) > 0n ? "profit" : "loss";
     let nextFill = 1;
     const orders: { key: string; label: string; state: string; price: Ratio | null; near: string; token: string; tx: string | null | undefined }[] = [
       { key: "tp", label: "Take profit", state: t.done?.kind === "tp" ? "filled" : BigInt(held) > 0n && !t.done ? "armed" : "waiting", price: tpPrice,
         near: sale?.nativeIn ? fmt(sale.nativeIn) : d.tpLine === null ? "-" : fmt(d.tpLine), token: sale ? asset(t.pair.token, sale.amount) : BigInt(held) > 0n ? asset(t.pair.token, held) : "-", tx: sale?.txHash },
-      { key: "base", label: "Base order", state: d.p0 === null ? "waiting" : "filled", price: d.p0, near: exactNear(BigInt(s.base)), token: d.p0 !== null && fills[0]?.out ? asset(t.pair.token, fills[0].out) : "-", tx: d.p0 === null ? null : fills[0]?.txHash },
+      { key: "base", label: "Base order", state: d.p0 === null ? "waiting" : "filled", price: d.p0, near: exactNear(BigInt(s.base)), token: d.p0 !== null && roundFills[0]?.out ? asset(t.pair.token, roundFills[0].out) : "-", tx: d.p0 === null ? null : roundFills[0]?.txHash },
       ...d.levels.map(v => {
-        const fill = v.state === "filled" ? fills[nextFill++] : undefined;
+        const fill = v.state === "filled" ? roundFills[nextFill++] : undefined;
         return { key: `l${v.k}`, label: `DCA #${v.k}`, state: v.state, price: v.price, near: exactNear(BigInt(s.order)),
           token: fill?.out ? asset(t.pair.token, fill.out) : v.need === null ? "-" : `≥ ${tokenAmount(v.need, dec)} ${sym}`, tx: fill?.txHash };
       }),
@@ -372,10 +383,10 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
       <i style={{ width: 8, height: 8, borderRadius: 999, background: color }} /><Logo symbol={label} size={18} /><span style={{ minWidth: 56 }}>{label}</span><span style={CELL}>{x === null ? "-" : pct(x)}</span>
     </div>;
     const panel = tab === "Ongoing" ? <section className="fl-trade-table" style={CARD}>
-      <div style={HEAD}><span style={TITLE}>Ongoing</span><span style={MONO}>{`Round 1 · Step ${s.stepBps / 100}% · TP ${s.tpBps / 100}%`}</span></div>
+      <div style={HEAD}><span style={TITLE}>Ongoing</span><span style={MONO}>{`Round ${round} · Step ${s.stepBps / 100}% · TP ${s.tpBps / 100}%`}</span></div>
       <div style={{ position: "relative", padding: "18px 20px 2px" }}>
         <span aria-hidden="true" style={{ position: "absolute", left: 28, top: 28, bottom: 30, borderLeft: "1px dashed var(--line-1)" }} />
-        {ladder.length === 0 ? <div style={{ ...SUB, paddingBottom: 18 }}>Setting up: buying the base order.</div> : null}
+        {ladder.length === 0 ? <div style={{ ...SUB, paddingBottom: 18 }}>{cooling ? `Next round ${due(d.cooldownUntil!, now)}.` : "Setting up: buying the base order."}</div> : null}
         {ladder.map((row, i) => {
           const kind = row.kind === "tp" ? "tp" : row.state === "filled" ? "done" : "pending";
           return <React.Fragment key={`${row.kind}${row.k ?? ""}`}>
@@ -397,19 +408,35 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
         {nowIndex === ladder.length && ladder.length > 0 ? current : null}
       </div>
     </section> : tab === "Rounds" ? <section className="fl-trade-table" style={CARD} data-testid="dca-rounds">
-      <div style={{ ...HEAD, justifyContent: "flex-end" }}><span style={MONO}>{`${t.done ? 1 : 0} completed · realised ${t.done?.kind === "tp" ? signed(t.pnl) : "-"}`}</span></div>
+      <div style={{ ...HEAD, justifyContent: "flex-end" }}><span style={MONO}>{`${completed + (t.done ? 1 : 0)} completed · realised ${realised}`}</span></div>
       <div style={{ padding: "14px 16px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
-          <span style={{ font: "var(--weight-semibold) var(--text-sm)/1 var(--font-sans)", color: "var(--ink-1)" }}>Round 1</span>
+          <span style={{ font: "var(--weight-semibold) var(--text-sm)/1 var(--font-sans)", color: "var(--ink-1)" }}>{`Round ${round}`}</span>
           <span style={{ font: "var(--weight-medium) var(--text-xs)/1 var(--font-mono)", color: "var(--ink-1)", padding: "3px 7px", borderRadius: 999, border: "1px solid var(--line-1)" }}>{!t.done ? "ONGOING" : t.done.kind === "tp" ? "TAKE PROFIT" : t.done.kind === "sl" ? "STOP LOSS" : "ENDED"}</span>
-          <span style={{ ...SUB, marginLeft: "auto" }}>{t.done ? new Date(t.done.at).toLocaleString("en-US") : fills[0] ? `since ${new Date(fills[0].at).toLocaleString("en-US")}` : "-"}</span>
+          <span style={{ ...SUB, marginLeft: "auto" }}>{t.done ? new Date(t.done.at).toLocaleString("en-US") : roundFills[0] ? `since ${new Date(roundFills[0].at).toLocaleString("en-US")}` : cooling ? `starts ${due(d.cooldownUntil!, now)}` : "-"}</span>
         </div>
         <div className="fl-mobile-2col" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16 }}>
-          <Metric label="Duration" value={fills[0] ? duration((t.done?.at ?? now) - fills[0].at) : "-"} />
+          <Metric label="Duration" value={roundFills[0] ? duration((t.done?.at ?? now) - roundFills[0].at) : "-"} />
           <Metric label="Filled DCA orders" value={String(filled)} />
           <Metric label="Max DCA orders" value={String(d.levels.length)} />
-          <Metric label="Round PnL" value={signed(t.pnl)} tone={pnlTone} note={t.done ? undefined : "open round, at the pool price"} />
+          <Metric label="Round PnL" value={signed(roundPnl)} tone={toneOf(roundPnl)} note={t.done ? undefined : "open round, at the pool price"} />
         </div>
+        {past.map(r => {
+          const start = r.from ?? fills.find(f => f.round === r.n)?.at ?? null;
+          return <div key={r.n} style={{ borderTop: "1px solid var(--line-1)", marginTop: 16, paddingTop: 14 }} data-testid="dca-past-round">
+            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+              <span style={{ font: "var(--weight-semibold) var(--text-sm)/1 var(--font-sans)", color: "var(--ink-1)" }}>{`Round ${r.n}`}</span>
+              <span style={{ font: "var(--weight-medium) var(--text-xs)/1 var(--font-mono)", color: "var(--ink-1)", padding: "3px 7px", borderRadius: 999, border: "1px solid var(--line-1)" }}>TAKE PROFIT</span>
+              <span style={{ ...SUB, marginLeft: "auto" }}>{new Date(r.at).toLocaleString("en-US")}</span>
+            </div>
+            <div className="fl-mobile-2col" style={{ display: "grid", gridTemplateColumns: "repeat(4, minmax(0,1fr))", gap: 16 }}>
+              <Metric label="Duration" value={start === null ? "-" : duration(r.at - start)} />
+              <Metric label="Filled DCA orders" value={String(r.filled)} />
+              <Metric label="Max DCA orders" value={String(d.levels.length)} />
+              <Metric label="Round PnL" value={signed(gross(r).toString())} tone={toneOf(gross(r).toString())} />
+            </div>
+          </div>;
+        })}
       </div>
     </section> : tab === "Order history" ? history : tab === "Holdings" ? <section className="fl-trade-table" style={CARD} data-testid="dca-wallet">
       <div style={HEAD}><span style={TITLE}>Holdings</span></div>
@@ -446,8 +473,8 @@ export function NearTradeDetail({ job, simulated = false, tab = "Orders", onTab,
       <section className="fl-trade-table" style={{ padding: "18px 22px 20px", display: "grid", gap: 18, marginBottom: 18 }} data-testid="dca-round-card">
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <span style={{ font: "var(--weight-semibold) 15px/1 var(--font-sans)", color: "var(--ink-1)" }}>Current round</span>
-          <span style={{ font: "var(--weight-medium) var(--text-xs)/1 var(--font-mono)", color: "var(--ink-1)", padding: "4px 8px", borderRadius: 999, border: "1px solid var(--line-1)" }}>ROUND 1</span>
-          <button type="button" onClick={() => onTab?.("Ongoing")} style={{ marginLeft: "auto", cursor: "pointer", background: "none", border: "none", padding: 0, font: "var(--weight-medium) var(--text-sm)/1 var(--font-sans)", color: "var(--cat-yield)" }}>{t.done ? "Ended" : "Ongoing"}</button>
+          <span style={{ font: "var(--weight-medium) var(--text-xs)/1 var(--font-mono)", color: "var(--ink-1)", padding: "4px 8px", borderRadius: 999, border: "1px solid var(--line-1)" }}>{`ROUND ${round}`}</span>
+          <button type="button" onClick={() => onTab?.("Ongoing")} style={{ marginLeft: "auto", cursor: "pointer", background: "none", border: "none", padding: 0, font: "var(--weight-medium) var(--text-sm)/1 var(--font-sans)", color: "var(--cat-yield)" }}>{t.done ? "Ended" : cooling ? `Next round ${due(d.cooldownUntil!, now)}` : "Ongoing"}</button>
         </div>
         <button type="button" onClick={() => onTab?.("Ongoing")} style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 10, background: "none", border: "none", padding: 0, textAlign: "left" }}>
           <PairLogo symbol={sym} size={22} />

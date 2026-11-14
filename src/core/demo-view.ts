@@ -8,7 +8,7 @@ import { USDC, WNEAR } from './pins.js';
 import { otherToken, toNearDown } from './rhea-dcl.js';
 import type { Store } from './store.js';
 import { TRADE_PAIRS, type TradePair } from './trade-pairs.js';
-import { ladderFactor, levelNeed, outGivenIn, tpLine, tradePlan, type Sample, type TradeSettings } from './trade-settings.js';
+import { ladderFactor, levelNeed, outGivenIn, roundBasis, roundOf, tpLine, tradePlan, type Sample, type TradeSettings } from './trade-settings.js';
 
 /** Section 9: shown on every demo page. */
 export const DEMO_OMITS: readonly string[] = [
@@ -112,6 +112,8 @@ function tradeBlock(a: DemoAgent, s: DemoTradeSim | null, pair: TradePair, px: S
   const ledger = s ? { spent: s.spent, bought: s.bought, sold: s.sold, proceeds: s.proceeds, gasBuy: s.gasBuy, gasSell: s.gasSell, wnear: s.wnear }
     : { spent: '0', bought: '0', sold: '0', proceeds: '0', gasBuy: '0', gasSell: '0', wnear: '0' };
   const h = b(ledger.bought) - b(ledger.sold), k = b(ledger.spent) + b(ledger.gasBuy);
+  // As trade.ts tradeView (rounds spec 2): the current round's basis for the entry, take profit and stop loss.
+  const round = roundBasis({ ...ledger, roundBase: s?.roundBase });
   const value = px && s ? outGivenIn(h, b(px.token), b(px.wnear), fee) : null, walletValue = px && s ? outGivenIn(b(s.token), b(px.token), b(px.wnear), fee) : null;
   const plan = tradePlan(t), p0 = s?.p0 ? { num: b(s.p0.num), den: b(s.p0.den) } : null;
   const kind = a.endReason ? DONE[a.endReason] : undefined, done = kind ? { kind, at: s?.stopAt ?? a.updatedAt } : null;
@@ -121,7 +123,7 @@ function tradeBlock(a: DemoAgent, s: DemoTradeSim | null, pair: TradePair, px: S
     strategy: a.kind as 'schedule' | 'dca',
     pair: { id: pair.id, symbol: pair.symbol, token: pair.token, decimals: pair.decimals, poolId: pair.pin.poolId, feeBps: fee },
     settings: t, endsAt: a.endsAt, ledger,
-    avgCost: b(ledger.bought) > 0n ? { num: ledger.spent, den: ledger.bought } : null,
+    avgCost: h > 0n ? { num: round.spent.toString(), den: h.toString() } : !s?.roundBase && b(ledger.bought) > 0n ? { num: ledger.spent, den: ledger.bought } : null,
     spot: px ? { num: px.wnear, den: px.token } : null,
     value: value?.toString() ?? null, walletValue: walletValue?.toString() ?? null,
     pnl: value === null ? null : (b(ledger.proceeds) + value - k - b(ledger.gasSell)).toString(),
@@ -135,13 +137,14 @@ function tradeBlock(a: DemoAgent, s: DemoTradeSim | null, pair: TradePair, px: S
         return { k: i + 1, price: p0 ? { num: (p0.num * f.num).toString(), den: (p0.den * f.den).toString() } : null,
           need: p0 ? levelNeed(b(t.order), p0, i + 1, t.stepBps).toString() : null, state: s?.levels[i] ?? 'waiting' as const };
       }),
-      tpLine: p0 ? tpLine(k, t.tpBps).toString() : null, slLine: p0 && t.slBps > 0 ? (k * BigInt(10_000 - t.slBps) / 10_000n).toString() : null,
-      protect: s?.protect ?? null } : null,
+      tpLine: p0 ? tpLine(round.k, t.tpBps).toString() : null, slLine: p0 && t.slBps > 0 ? (round.k * BigInt(10_000 - t.slBps) / 10_000n).toString() : null,
+      protect: s?.protect ?? null,
+      round: s?.round ?? 1, roundStartAt: s?.roundBase?.at ?? null, roundSpent: round.spent.toString(), cooldownUntil: s?.cooldownUntil ?? null, rounds: [...(s?.rounds ?? [])].reverse() } : null,
     buys: ops.filter(r => r.data.kind === 'wrap' || r.data.kind === 'swap').map(r => {
       const swap = r.data.kind === 'swap', sell = r.data.note === TP_NOTE, out = typeof r.data.out === 'string' ? r.data.out : null;
       return { opId: r.id, kind: r.data.kind as 'wrap' | 'swap', side: sell ? 'sell' as const : 'buy' as const, amount: String(r.data.amount), verdict: swap ? 'swapped' : 'success',
         used: swap ? String(r.data.amount) : null, out: swap && !sell ? out : null, nativeIn: sell ? out : null, txHash: null,
-        message: typeof r.data.note === 'string' ? r.data.note : null, at: r.at };
+        message: typeof r.data.note === 'string' ? r.data.note : null, at: r.at, ...(t.strategy === 'dca' ? { round: s ? roundOf(s, r.at) : 1 } : {}) };
     }),
     done,
   };
