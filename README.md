@@ -2,11 +2,13 @@
 
 <img src="web/public/4lpha_logo_180.png" alt="4lpha" width="96" />
 
+[Judge brief (Markdown)](JUDGING.md)
+
 **4lpha is a hosted DeFi agents marketplace on NEAR mainnet.**
 
 Deposit NEAR, pick an agent, and it trades on Rhea Finance from its own custody wallet, under a spending policy that your NEAR account owns and can freeze.
 
-[Main demo](https://youtu.be/LiskEYE7MjE) · [Hosted demo](https://near.4lpha.tech) · [Strategies](#the-four-strategies) · [Try it with no funds](#try-it-with-no-funds) · [Mainnet evidence](#mainnet-evidence) · [Security](#security-what-the-agents-key-can-and-cannot-do)
+[Main demo](https://youtu.be/LiskEYE7MjE) · [Hosted demo](https://near.4lpha.tech) · [Judge guide](https://near.4lpha.tech/judge) · [Strategies](#the-four-strategies) · [Try it with no funds](#try-it-with-no-funds) · [Mainnet evidence](#mainnet-evidence) · [Security](#security-what-the-agents-key-can-and-cannot-do)
 
 <a href="https://youtu.be/LiskEYE7MjE"><img src="https://i.ytimg.com/vi/LiskEYE7MjE/hqdefault.jpg" alt="Watch the 4lpha NEAR main demo" width="480" /></a>
 

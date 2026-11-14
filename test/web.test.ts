@@ -238,20 +238,36 @@ test('UI dispatcher serves only confined ASCII static files and SPA routes, keep
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   writeFileSync(join(ui, 'index.html'), '<html>UI index</html>');
   writeFileSync(join(ui, 'main.js'), 'UI script');
+  const judgeMarkdown = '# Judge brief\n\nNEAR policy → evidence.\n';
+  writeFileSync(join(ui, 'judge.md'), judgeMarkdown);
+  writeFileSync(join(ui, 'unlisted.md'), 'Not a public route');
+  mkdirSync(join(ui, 'judge')); writeFileSync(join(ui, 'judge', 'step.jpg'), 'guide screenshot');
   writeFileSync(join(ui, 'fonts', 'font.woff2'), 'font');
   writeFileSync(join(dir, 'outside.js'), 'OUTSIDE FILE');
   mkdirSync(join(dir, 'outside')); writeFileSync(join(dir, 'outside', 'file.js'), 'OUTSIDE DIRECTORY');
   const { request, cookie } = handler(t, true, ui);
-  for (const route of ['/', '/account/x', '/account']) {
+  for (const route of ['/', '/account/x', '/account', '/judge', '/judge/', '/judge?review=1']) {
     const r = await request(route);
     assert.equal(r.status, 200); assert.equal(r.text, '<html>UI index</html>');
     assert.equal(r.headers.get('Content-Type'), 'text/html; charset=utf-8');
+    assert.equal(r.headers.get('X-Robots-Tag'), route.startsWith('/judge') ? 'noindex, nofollow' : undefined);
   }
   for (const route of ['/main.js', '/main.js?x=..']) {
     const r = await request(route); assert.equal(r.text, 'UI script'); assert.equal(r.headers.get('Content-Type'), 'text/javascript; charset=utf-8');
   }
   assert.equal((await request('/fonts/font.woff2')).headers.get('Content-Type'), 'font/woff2');
-  for (const route of ['/x.json', '/x.map', '/MAIN.JS', '/main.js/..', '/..%2fsrc/web/server.ts', '/%2e%2e/package.json', '/a\\b']) assert.equal((await request(route)).status, 404, route);
+  const shot = await request('/judge/step.jpg');
+  assert.equal(shot.status, 200); assert.equal(shot.text, 'guide screenshot');
+  assert.equal(shot.headers.get('Content-Type'), 'image/jpeg');
+  for (const route of ['/judge.md', '/judge.md?format=raw']) {
+    const brief = await request(route);
+    assert.equal(brief.status, 200); assert.equal(brief.text, judgeMarkdown);
+    assert.equal(brief.headers.get('Content-Type'), 'text/markdown; charset=utf-8');
+    assert.equal(brief.headers.get('X-Robots-Tag'), 'noindex, nofollow');
+    assert.equal(brief.headers.get('X-Content-Type-Options'), 'nosniff');
+  }
+  assert.equal((await request('/judge.md', 'POST')).status, 404);
+  for (const route of ['/x.json', '/x.map', '/MAIN.JS', '/unlisted.md', '/JUDGING.md', '/judge.md/', '/main.js/..', '/..%2fsrc/web/server.ts', '/%2e%2e/package.json', '/a\\b']) assert.equal((await request(route)).status, 404, route);
   const doubled = await request('//etc/passwd'); assert.ok([403, 404].includes(doubled.status)); assert.doesNotMatch(doubled.text, /OUTSIDE/);
   // API paths are checked while a valid index.html exists, so a wrong SPA fallback would show up as HTML.
   for (const route of ['/api/unknown', '/api%2fjobs']) {

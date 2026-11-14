@@ -25,6 +25,7 @@ const ctx = await context({
 await ctx.rebuild();
 await cp('web/index.html', 'dist/ui/index.html');
 await cp('web/public', 'dist/ui', { recursive: true });
+await cp('JUDGING.md', 'dist/ui/judge.md');
 await cp('web/app/icon.png', 'dist/ui/icon.png');
 await cp('web/app/apple-icon.png', 'dist/ui/apple-icon.png');
 

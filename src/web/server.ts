@@ -355,14 +355,18 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
       if (path !== '/api' && !path.startsWith('/api/')) {
         const asset = req.method === 'GET' ? assets[path] : undefined;
         if (asset) { const content = await readFile(asset[1]); res.setHeader('Content-Type', asset[0]); res.end(content); return; }
-        const types: Record<string, string> = { '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2' };
+        const types: Record<string, string> = { '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2' };
         const extension = extname(path);
-        const type = extension ? types[extension] : /^\/(?:[a-z0-9-]+(?:\/[A-Za-z0-9._-]+)*)?$/.test(path) ? 'text/html; charset=utf-8' : undefined;
+        const judgePage = path === '/judge' || path === '/judge/';
+        const judgeMarkdown = path === '/judge.md';
+        const type = judgeMarkdown ? 'text/markdown; charset=utf-8' : extension ? types[extension] : judgePage || /^\/(?:[a-z0-9-]+(?:\/[A-Za-z0-9._-]+)*)?$/.test(path) ? 'text/html; charset=utf-8' : undefined;
         if (req.method === 'GET' && type && uiRoot) {
           const file = resolve(uiRoot, extension ? path.slice(1) : 'index.html');
           try {
             if ((await lstat(file)).isFile() && (await realpath(file)).startsWith(uiRoot + sep)) {
-              const content = await readFile(file); res.setHeader('Content-Type', type); res.end(content); return;
+              const content = await readFile(file); res.setHeader('Content-Type', type);
+              if (judgePage || judgeMarkdown) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+              res.end(content); return;
             }
           } catch { /* Missing or unsafe UI asset. */ }
         }
