@@ -155,7 +155,6 @@ export function JudgeGuide() {
           <span className={`fl-jg-badge${feature.proven ? ' fl-jg-badge--proven' : ''}`}>{feature.status}</span><h3 className="fl-jg-h3">{feature.title}</h3><p className="fl-jg-p">{feature.description}</p>
           <div className="fl-jg-heading"><span className="fl-jg-eyebrow">Recorded on mainnet</span><ul className="fl-jg-list">{feature.recorded.map(item => <li key={item}>{item}</li>)}</ul></div>
           {feature.proofs.map(group => <div className="fl-jg-proofgroup" key={group.title}><span className="fl-jg-cmdtitle">{group.title}</span><EvidenceLinks items={group.links} /></div>)}
-          <p className="fl-jg-note">{feature.note}</p>
           <EvidenceLinks items={[{ label: 'Open demo settings', href: feature.route }, ...feature.evidence]} />
         </article>)}</div>
         <div className="fl-jg-heading"><h3 className="fl-jg-h3">Shared execution and recovery</h3><p className="fl-jg-sub">Evidence for the wallet controls, receipt handling and recovery behind the strategies.</p></div>
