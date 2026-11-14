@@ -4,6 +4,7 @@ import { nativeSpendProblems, opsProblems } from './budget.js';
 import { CoreError } from './errors.js';
 import { drainGrid, GRID_EVAL_MS, GRID_SETTINGS_INVALID, GRID_V1_STEP, gridKnownOrders, gridOrderGate, gridSettingsFromRequest, jobGridStep, tickGrid } from './grid.js';
 import { drainLp, LP_EVAL_MS, LP_MIN_DEPOSIT, lpGate, lpKnownPositions, lpSettingsFromPrices, tickLp } from './lp.js';
+import type { ReportActivity } from './activity.js';
 import type { LpAi } from './lp-ai.js';
 import { readHoldings, registered } from './holdings.js';
 import type { NearRpc } from './near-rpc.js';
@@ -81,7 +82,7 @@ export function draftProblems(i: { session: { accountId: string } | null; kind: 
 /** How often the funding wait reads the chain when the worker has an idle client. */
 export const FUND_EVAL_MS = 15_000;
 /** `idleRpc` (RPC budget, 2026-11-13) serves only the Grid and LP evaluation ticks and the funding wait; guarded operations, receipts, policy checks and exits use `rpc`. */
-export interface WorkerDeps { store: Store; rpc: NearRpc; idleRpc?: NearRpc; outlayer: OutLayerClient; kek: Buffer; live: boolean; gridV1?: boolean; gridV2?: boolean; lpV1?: boolean; tradeV1?: boolean; ai?: LpAi; origin: string; provider: unknown; now: () => number; }
+export interface WorkerDeps { store: Store; rpc: NearRpc; idleRpc?: NearRpc; outlayer: OutLayerClient; kek: Buffer; live: boolean; gridV1?: boolean; gridV2?: boolean; lpV1?: boolean; tradeV1?: boolean; ai?: LpAi; activity?: ReportActivity; origin: string; provider: unknown; now: () => number; }
 export interface JobStrategy { kind: JobKind; tick(ops: GuardedOps, jobId: string): Promise<void>; exit(ops: GuardedOps, jobId: string): Promise<'done' | 'retry'>; }
 export const STRATEGIES: Readonly<Partial<Record<JobKind, JobStrategy>>> = {};
 /** Trade V1 11.1: a trade job holds its one pinned token; this alone gives the watchdog, holdings, recipient checks, exit and view the right token. */
@@ -298,7 +299,8 @@ async function afterArm(d: WorkerDeps, job: Job) {
     if (job.gridV1) store.setMeta(`grid_running_since:${job.id}`, String(now()));
     // Trade V1 9.4 and 10.3: a stop-loss observation or a row-less step from before this transition is discarded by the next tick.
     if (job.trade) store.setMeta(`trade_running_since:${job.id}`, String(now()));
-    setJob(store, job, 'running', now(), { reason: null });
+    // Activity: one event per job; a resume re-sends the same key and body, which the service treats as the same event.
+    if (setJob(store, job, 'running', now(), { reason: null })) d.activity?.({ eventType: 'agent.hired', actor: job.owner, idempotencyKey: `job:${job.id}:hired`, payload: { agent: job.kind } });
   }
   else if (job.state === 'running') {
     // Guarded operations keep the QuickNode-first client; only the Grid and LP evaluation reads use the idle client.
@@ -318,7 +320,7 @@ async function afterArm(d: WorkerDeps, job: Job) {
         const venue = await readDcl(rpc, b.agentAccount, snap, job.gridV1 ? gridKnownOrders(store, job.id) : []);
         if ((job.gridV1 ? dclBlocked(venue) || dclOpen(venue).length : lpBlocked(venue, [])) || Object.values(venue.assets).some(n => n > 0n) || Object.values(snap.tokens).some(n => n > 0n) || snap.spendable > MONEY.sweepReserve) return;
       }
-      setJob(store, job, 'stopped', now(), { reason: null });
+      if (setJob(store, job, 'stopped', now(), { reason: null })) d.activity?.({ eventType: 'agent.withdrawn', actor: job.owner, idempotencyKey: `job:${job.id}:withdrawn`, payload: { agent: job.kind } });
     }
     else if (status === 'blocked') reason(d, job, 'Withdrawal is waiting for the wallet, finalized reads or exit budget.');
   }

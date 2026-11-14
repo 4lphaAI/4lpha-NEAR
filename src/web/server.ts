@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
 import { accessKeyProvider, newChallenge, newSessionToken, RECIPIENT, SESSION_TTL, signedAnswer, tokenHash, verifySigned } from '../core/auth.js';
 import { parseAmount, YOCTO_PER_NEAR } from '../core/amounts.js';
+import { activityEnv, type ReportActivity } from '../core/activity.js';
 import { dbPath, dRpcFirst, localEnv, rpcEnv, rpcLabel, webEnv, type WebEnv } from '../core/config.js';
 import { CoreError, fail, ok, record, type ErrorCode } from '../core/errors.js';
 import { readDclBefore } from '../core/dcl-evidence.js';
@@ -81,7 +82,7 @@ const RETIRE_DUST = YOCTO_PER_NEAR * 2n / 100n;
 class Shown extends CoreError { constructor(code: ErrorCode, message: ShownText) { super(code, message); } }
 
 export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now: () => number; ai?: boolean; provider?: unknown; wait?: (ms: number) => Promise<unknown>; uiRoot?: string;
-  marketData?: { url: string; token: string; fetch?: typeof fetch }; demoStore?: Store }) {
+  marketData?: { url: string; token: string; fetch?: typeof fetch }; demoStore?: Store; activity?: ReportActivity }) {
   const { store, rpc, env, now } = d;
   // The store of the demo routes: the one database of a standalone demo web, or the second store of the main app on its own demo database
   // (DEMO-MODE-COMBINED-PLAN section 1). Without either the demo is off; the live store never serves a demo route in the main app.
@@ -424,7 +425,9 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
           if (req.method === 'GET') { send(ok(store.memeAgents(session.accountId).map(a => memeAgentView(a, session.accountId)))); return; }
           const input = await body(req);
           if (!validMemeSettings(input)) throw new CoreError('bad_request', 'Invalid paper settings.');
-          send(ok({ id: store.createMemeAgent(session.accountId, input, now()).id }), 201); return;
+          const created = store.createMemeAgent(session.accountId, input, now());
+          d.activity?.({ eventType: 'paper-agent.created', actor: session.accountId, idempotencyKey: `meme:${created.id}:created` });
+          send(ok({ id: created.id }), 201); return;
         }
         const meme = /^\/api\/meme\/([0-9a-f-]{36})(?:\/(stop))?$/.exec(path);
         const a = meme ? store.getMemeAgent(meme[1]) : null;
@@ -471,6 +474,8 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
           const cookie = demoCookie ?? randomBytes(16).toString('hex');
           const a = demoStore.createDemoAgent({ owner: createHash('sha256').update(cookie).digest('hex'), kind: created.kind, pair: created.pair, settings: created.settings,
             depositYocto: created.depositYocto.toString(), seed: 0 }, now());
+          // Activity: only a signed-in NEAR account counts, once per account per UTC day (same key and body after the first).
+          if (session) d.activity?.({ eventType: 'demo-agent.created', actor: session.accountId, idempotencyKey: `demo:${session.accountId}:${new Date(now()).toISOString().slice(0, 10)}` });
           demoCreations.delete(address); demoCreations.set(address, [...recent, now()]);
           if (demoCreations.size > 10_000) demoCreations.delete(demoCreations.keys().next().value!);
           if (!demoCookie) res.setHeader('Set-Cookie', `${DEMO_COOKIE}=${cookie}; ${cookieFlags}; Max-Age=${30 * 86_400}`);
@@ -677,7 +682,7 @@ function main() {
   const demoStore = env.demoDb === undefined ? undefined : openStore(env.demoDb, 'web', true);
   const rpc = createNearRpc(endpoints, undefined, undefined, { coordinator: store.rpcCoordinator() });
   const local = localEnv(), dataPlaneUrl = process.env.DATA_PLANE_URL || local.DATA_PLANE_URL, dataPlaneToken = process.env.DATA_PLANE_TOKEN || local.DATA_PLANE_TOKEN;
-  const handler = createHandler({ env, store, rpc, now: Date.now, provider: accessKeyProvider(endpoints.read[0], rpc), ai: !!local.NEAR_AI_API_KEY, ...(demoStore ? { demoStore } : {}),
+  const handler = createHandler({ env, store, rpc, now: Date.now, provider: accessKeyProvider(endpoints.read[0], rpc), ai: !!local.NEAR_AI_API_KEY, ...(demoStore ? { demoStore } : {}), ...(env.demo ? {} : { activity: activityEnv(local) }),
     ...(dataPlaneUrl && dataPlaneToken ? { marketData: { url: dataPlaneUrl, token: dataPlaneToken } } : {}) });
   const server = createServer((req, res) => { void handler(req, res); });
   server.on('error', () => { console.error('Web server could not start.'); process.exitCode = 1; });

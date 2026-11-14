@@ -1,6 +1,7 @@
 import { setTimeout as sleep } from 'node:timers/promises';
 import { accessKeyProvider } from '../core/auth.js';
-import { dbPath, freeFirst, lpAiEnv, outlayerUrl, rpcEnv, rpcLabel, webEnv } from '../core/config.js';
+import { activityEnv } from '../core/activity.js';
+import { dbPath, freeFirst, localEnv, lpAiEnv, outlayerUrl, rpcEnv, rpcLabel, webEnv } from '../core/config.js';
 import { advanceJob, processReveals, type WorkerDeps } from '../core/hire.js';
 import { createNearRpc } from '../core/near-rpc.js';
 import { reconcileEvery, reconcileWallet } from '../core/ops.js';
@@ -25,7 +26,7 @@ async function main() {
   process.on('SIGINT', quit);
   process.on('SIGTERM', quit);
   const timer = setInterval(() => { try { if (!store.heartbeat('worker', Date.now())) quit(); } catch { quit(); } }, 10_000);
-  const d: WorkerDeps = { store, rpc, outlayer, kek, origin, now: Date.now, provider: accessKeyProvider(endpoints.read[0], rpc), idleRpc, live: process.env.FOURLPHA_WORKER_LIVE === '1', gridV1, gridV2, lpV1, tradeV1, ai: lpAiEnv() };
+  const d: WorkerDeps = { store, rpc, outlayer, kek, origin, now: Date.now, provider: accessKeyProvider(endpoints.read[0], rpc), idleRpc, live: process.env.FOURLPHA_WORKER_LIVE === '1', gridV1, gridV2, lpV1, tradeV1, ai: lpAiEnv(), activity: activityEnv(localEnv()) };
   let venueAt = 0;
   const lastReconcile = new Map<string, number>();
   try {
