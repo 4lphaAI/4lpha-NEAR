@@ -206,6 +206,23 @@ OutLayer answered: HTTP 403 policy_denied "Address 'be9bf5d386c0d344b8b38249f358
 Agent at block 224328473: 0.010985 NEAR (was 0.010985 NEAR at block 224328453). Nothing moved.
 ```
 
+**Verify it yourself (public RPC, no key).** A refused request creates no transaction, because OutLayer checks the policy before it signs, so the refusal has no hash. The chain shows that the key signed nothing:
+
+1. **Nonce unchanged.** An access key's nonce goes up by one with every transaction it signs. The agent's only key has nonce `224223787000037` at block 224328453 (before), at block 224328473 (after) and today. Repeat this with `"block_id":224328473`, and with `"finality":"final"` instead of `block_id`; `"request_type":"view_account"` shows the same balance, `10985010462500000000000` yoctoNEAR, at both blocks.
+
+   ```bash
+   curl -s https://archival-rpc.mainnet.fastnear.com -H "content-type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"view_access_key_list","account_id":"4bc8c18e0c19004444236efed8076a8d5738cd64396adb4c7cb10a61ee318418","block_id":224328453}}'
+   ```
+
+2. **That nonce is a payment to the owner.** The transaction signed with it is the job's last payout to its whitelisted owner, 0.249 NEAR at 2026-11-13 03:00:51 UTC: [HubaVhnTMDVvifzKMKZt3Mj8MAsMTvqe1oG2mpGyoqA8](https://nearblocks.io/txns/HubaVhnTMDVvifzKMKZt3Mj8MAsMTvqe1oG2mpGyoqA8). The same key pays the owner and has signed nothing since ([account history](https://nearblocks.io/address/4bc8c18e0c19004444236efed8076a8d5738cd64396adb4c7cb10a61ee318418)).
+3. **The policy is on chain, owned by the user, not frozen** (`result` is UTF-8 JSON bytes). Its rules are encrypted, so the whitelist itself is not readable from the chain.
+
+   ```bash
+   curl -s https://rpc.mainnet.fastnear.com -H "content-type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"query","params":{"request_type":"call_function","account_id":"outlayer.near","method_name":"get_wallet_policy","args_base64":"eyJ3YWxsZXRfcHVia2V5IjoiZWQyNTUxOTo0YmM4YzE4ZTBjMTkwMDQ0NDQyMzZlZmVkODA3NmE4ZDU3MzhjZDY0Mzk2YWRiNGM3Y2IxMGE2MWVlMzE4NDE4In0=","finality":"final"}}'
+   ```
+
+The HTTP 403 answer itself is OutLayer's API reply, recorded in the log above, not on chain. To see a refusal first-hand, run the live leg ([`scripts/attack-demo-live.mjs`](scripts/attack-demo-live.mjs)) with your own OutLayer wallet; storing a policy costs about 0.016 NEAR (FINDINGS 1.36).
+
 ---
 
 ## Mainnet evidence
