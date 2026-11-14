@@ -37,8 +37,8 @@
 .fl-jg-badge:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
 .fl-jg-badge--proven{color:var(--brand);border-color:var(--brand-line);background:var(--brand-tint)}
 .fl-jg-ev{display:flex;flex-wrap:wrap;gap:6px}
-.fl-jg-ev a,.fl-jg-pending{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:4px 9px;border:1px solid var(--line-2);border-radius:var(--radius-pill);background:var(--raised);font:var(--type-label);color:var(--ink-2)}
-.fl-jg-pending{border-style:dashed;color:var(--text-subtle)}
+.fl-jg-ev a{display:inline-flex;align-items:center;gap:5px;min-height:26px;padding:4px 9px;border:1px solid var(--line-2);border-radius:var(--radius-pill);background:var(--raised);font:var(--type-label);color:var(--ink-2)}
+.fl-jg-proofgroup{display:grid;gap:8px;padding-top:12px;border-top:1px solid var(--line-1)}
 .fl-jg-video{display:grid;gap:12px;min-width:0;padding:16px;border:1px solid var(--border-card);border-radius:var(--radius-md);background:var(--surface-card)}
 .fl-jg-tutorials{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}
 .fl-jg-vframe{position:relative;display:grid;place-content:center;justify-items:center;gap:12px;width:100%;aspect-ratio:16/9;padding:16px;border:1px solid var(--line-2);border-radius:var(--radius-sm);overflow:hidden;background:var(--surface-sunken);color:var(--text-subtle);font:var(--type-label);text-align:center}

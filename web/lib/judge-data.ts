@@ -3,18 +3,21 @@
 export const REPO = 'https://github.com/4lphaAI/4lpha-NEAR';
 export const DOCS = 'https://docs.4lpha.tech/NEAR';
 export const source = (path: string) => `${REPO}/blob/main/${path}`;
+const tx = (hash: string) => `https://nearblocks.io/txns/${hash}`;
 
 export interface Evidence { label: string; href: string }
+export interface ProofGroup { title: string; links: Evidence[] }
 export interface Video { title: string; description: string; url: string | null }
 export interface Feature {
   title: string;
   status: string;
   proven: boolean;
   description: string;
+  recorded: string[];
   note: string;
   route: string;
   evidence: Evidence[];
-  transactions: Evidence[];
+  proofs: ProofGroup[];
 }
 
 export const VIDEOS: Video[] = [
@@ -50,26 +53,102 @@ export const FEATURES: Feature[] = [
   {
     title: 'Grid Agent', status: 'Mainnet order cycle proven', proven: true,
     description: 'Native limit orders on Rhea DCL, USDC/wNEAR 0.01%. A fully filled order is claimed, its payout verified from receipts, then reversed one grid step away.',
-    note: 'Recorded run: four orders, a full fill, claim, reverse and reverse fill. That run was withdrawn with owner recovery tooling. The worker\'s Grid exit is not yet recorded live.',
-    route: '/deploy/grid', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.grid }, { label: 'Strategy code', href: source('src/core/grid.ts') }], transactions: [],
+    recorded: ['13 to 14 Nov 2026: 0.90% spacing, 26 orders placed and 23 fills claimed and reversed in about 24 hours (README snapshot).', 'An earlier run also proved owner-operated recovery: claim the DCL funds, then return USDC to the owner.'],
+    note: 'Still to verify on mainnet: the worker\'s own Grid exit, a freeze while orders rest, stop loss and take profit.',
+    route: '/deploy/grid', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.grid }, { label: 'Strategy code', href: source('src/core/grid.ts') }, { label: 'Offline tests', href: source('test/grid.test.ts') }],
+    proofs: [
+      { title: 'Showcase run: place, claim, reverse', links: [
+        { label: 'Place order', href: tx('DucP2AeZsFkJztVwZhHZmiua4sYABDSy4AtXHfqi7bBv') },
+        { label: 'Claim fill', href: tx('AZ7EBoegX6rhNk4qnscyXRspMyYwiit4BsjnieoawPnM') },
+        { label: 'Reverse order', href: tx('4nGqV5sY1SfRt3aGBYN2JNLbHVYUQcdLnHcTEVFfyCSR') },
+      ] },
+      { title: 'Earlier run: owner-operated recovery', links: [
+        { label: 'Recover DCL claim', href: tx('3Yy4UXMAyN6aCVnBc3DPrYH34Fwvrh37ejK8Z1r8PHWN') },
+        { label: 'USDC back to owner', href: tx('FuHTgXiKBwDMHnR1y4nCnNZnaVLFJ8WnBTqd6iYwux4s') },
+      ] },
+    ],
   },
   {
     title: 'LP Agent', status: 'Mainnet lifecycle proven', proven: true,
     description: 'Concentrated liquidity on Rhea DCL. It recenters after two confirmed out-of-range checks, with at most two rotations per day. Optional compound, stop loss and take profit.',
-    note: 'Recorded run: open, automatic rotation, freeze, unfreeze and the worker\'s exit to the owner. Compound, stop loss, take profit and an accepted AI range are not yet recorded live.',
-    route: '/deploy/lp', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.lp }, { label: 'Strategy code', href: source('src/core/lp.ts') }, { label: 'AI range fence', href: source('src/core/lp-ai.ts') }], transactions: [],
+    recorded: ['13 Nov 2026 showcase: opened a position, completed two automatic rotations, then held at the two-per-24-hour limit.', '10 Nov 2026 verification: open, rotate, freeze and unfreeze with liquidity resting, then the worker removed the position and paid the owner.'],
+    note: 'Still to verify on mainnet: compound, stop loss, take profit and an accepted AI-suggested range.',
+    route: '/deploy/lp', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.lp }, { label: 'Strategy code', href: source('src/core/lp.ts') }, { label: 'AI range fence', href: source('src/core/lp-ai.ts') }, { label: 'Offline tests', href: source('test/lp-v2.test.ts') }],
+    proofs: [
+      { title: 'Showcase run: open and two rotations', links: [
+        { label: 'Open position', href: tx('4fsLDwzSFunY5BwcVkkkSmP1dcEeUK59Zt6ipWfEZ5qp') },
+        { label: 'Rotation 1: remove', href: tx('57DURJQ5vHyms6mFqgz7rrwkcMaPxQT8FoFoN3WpoVKZ') },
+        { label: 'Rotation 1: reopen', href: tx('61MC5x7N8nR5HgK5ATF2vDxZv4TW1ghGciRa2dydC1fo') },
+        { label: 'Rotation 2: remove', href: tx('G5FqoBfbJ2EcuCVe9CUJREMzdA6R2ZeWVVCNS5MtMN2E') },
+        { label: 'Rotation 2: reopen', href: tx('5PpWzDqjQAGM2peVXQHzb3cXjshvBCHSYqgqdYza6mdH') },
+      ] },
+      { title: 'Earlier verification: freeze and worker exit', links: [
+        { label: 'Open position', href: tx('4hKfZeuh7BjwsRnnMiUcBBkP4V5mxypCtQobHZuBrFZ7') },
+        { label: 'Owner freeze', href: tx('5Y8SnukgJdfzBa1P6KUDvVouFyKwm6GyMFVg76swz6hg') },
+        { label: 'Owner unfreeze', href: tx('A38PwYNXveQgQmT7CrSLzPvpKdgpVPCsjRRKCW33nq7X') },
+        { label: 'Worker removes position', href: tx('4Ai7XWNiWYknf3XZbefrRms8dAozkqyK1exyxfTxGTeZ') },
+        { label: 'USDC back to owner', href: tx('9KDHuAfxkzvg4S77t39KFXKfmMWb6HfNUvZu2Qzs1tJx') },
+      ] },
+    ],
   },
   {
-    title: 'Schedule buy', status: 'Mainnet agent linked', proven: true,
+    title: 'Schedule buy', status: 'Mainnet buys and payout proven', proven: true,
     description: 'Buys a fixed amount in NEAR on a schedule through a pinned Rhea classic pool. Bought tokens stay in the agent wallet until the plan ends.',
-    note: 'A real-fund agent is linked for inspection, alongside the no-funds demo. Its page shows the current run; full lifecycle verification remains separate.',
-    route: '/deploy/trade/schedule', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.schedule }, { label: 'Strategy code', href: source('src/core/trade.ts') }], transactions: [],
+    recorded: ['13 Nov 2026: four buys of 0.1 NEAR, scheduled four hours apart on the USDC/wNEAR classic pool 4512.', 'The completed run paid 1.395917 USDC and the remaining NEAR to the owner. The public page retains its purchase history.'],
+    note: 'These receipts cover this USDC plan. Other token pairs and all possible end or failure paths are separate checks.',
+    route: '/deploy/trade/schedule', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.schedule }, { label: 'Strategy code', href: source('src/core/trade.ts') }, { label: 'Offline tests', href: source('test/trade.test.ts') }],
+    proofs: [{ title: 'Showcase run: scheduled buys and withdrawal', links: [
+      { label: 'First scheduled buy', href: tx('DYdjbkPSiARsGaSJuvJaVswdg5mReBgywYThg9cRYtEL') },
+      { label: 'Fourth scheduled buy', href: tx('9dX8i1mvZZeuhCYTrmSJkfUAv78kvZS34yqkXcyMNyC9') },
+      { label: 'USDC paid to owner', href: tx('38f9fjtBR4tBYLhkx4mwcdb9PxHxqXSMwxhrLzbDDjad') },
+    ] }],
   },
   {
-    title: 'Auto DCA', status: 'Mainnet agent linked', proven: true,
+    title: 'Auto DCA', status: 'Mainnet base buy proven', proven: true,
     description: 'One base order and a ladder of buys below the entry price. Take profit sells back to NEAR. Stop loss ends the job and returns NEAR plus the token without selling it.',
-    note: 'A real-fund agent, strategy tutorial and no-funds demo are linked. The next-round restart is built, with up to eight DCA levels per round; a second round has not yet been recorded on mainnet.',
-    route: '/deploy/trade/dca', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.dca }, { label: 'Strategy code', href: source('src/core/trade.ts') }], transactions: [],
+    recorded: ['14 Nov 2026: a base order spent 0.1 NEAR to buy USDC through classic pool 4512.', 'The recorded agent is configured with three DCA levels at 0.5% steps and a 0.7% take profit. Those settings describe the plan, not proof that each level has filled.'],
+    note: 'The linked transaction proves the base buy. The next-round restart is built and tested offline; a second round has not yet been recorded on mainnet.',
+    route: '/deploy/trade/dca', evidence: [{ label: 'Real-fund agent', href: AGENT_LINKS.dca }, { label: 'Strategy code', href: source('src/core/trade.ts') }, { label: 'Offline tests', href: source('test/trade.test.ts') }],
+    proofs: [{ title: 'Showcase run: initial purchase', links: [
+      { label: 'Base buy: 0.1 NEAR', href: tx('6CGuHNn8VdtL3EwsNWuhNuAj4NKQAUDkuoEUMyf2cQX2') },
+    ] }],
+  },
+];
+
+export const EXECUTION_EVIDENCE = [
+  {
+    title: 'Owner policy and withdrawals',
+    description: 'A user stored and owned the custody-wallet policy on NEAR. A separate core hire verification exercised freeze, signed resume and Stop and withdraw, paying the owner in bounded transfers.',
+    proofs: [
+      { title: 'Policy ownership verification', links: [{ label: 'Store wallet policy', href: tx('s5a3JtKPJLdV9E2b42jpZoM4Pg54y79wH33PpLwVEim') }] },
+      { title: 'Separate core exit verification', links: [
+        { label: 'Owner withdrawal 1', href: tx('D1gwobL3advvV7XnehQDQPzq1dksWKhCTDaeLAvGThPe') },
+        { label: 'Owner withdrawal 2', href: tx('2B4zCQgkzjK6NfdD6Y6onJ1eFDGi2ubGVK8aZTVQuc4N') },
+      ] },
+    ],
+    note: 'The native-payment refusal is API evidence with no transaction hash. Its log and the token-policy limits are in Security proof above.',
+    evidence: [{ label: 'Policy code', href: source('src/core/policy.ts') }, { label: 'Hire tests', href: source('test/hire.test.ts') }, { label: 'Security proof', href: '#security' }],
+  },
+  {
+    title: 'Swaps, refunds and receipts',
+    description: 'The custody-wallet probe swapped into USDC, deliberately triggered a slippage refund, then swapped back to native NEAR. Each result was classified from the receipts.',
+    proofs: [
+      { title: 'Custody-wallet swap probe', links: [
+        { label: 'Swap into USDC', href: tx('Dta33qXP9r2pwrokJunjf6QbkoueohzmVtpTiC8KpKws') },
+        { label: 'Forced slippage refund', href: tx('3LfecsNjnt5MQ8f9kSYAkocuFNHn5ZJmrDFLUrtCPeUZ') },
+        { label: 'Swap back to NEAR', href: tx('CxA3XmvRS8VzDLV5sGG438Pbsnrb2yUpK5UAcXEEdiWz') },
+      ] },
+      { title: 'Third-party receipt example', links: [{ label: 'Top-level success, inner swap refunded', href: tx('2kGmQmnP2qL1QfvmoY36Yo7ApSQh5vEFbtUehEAPv7Ko') }] },
+    ],
+    note: 'The refund is evidence of failure handling. The third-party example illustrates why a successful top-level status alone cannot prove a trade succeeded.',
+    evidence: [{ label: 'Receipt parser', href: source('src/core/receipts.ts') }, { label: 'Receipt tests', href: source('test/receipts.test.ts') }],
+  },
+  {
+    title: 'Recovery after a lost reply',
+    description: 'A completed token-registration request was sent again under its original idempotency key. OutLayer returned duplicate_idempotency_key and the original request; no second request was created.',
+    proofs: [{ title: 'Original registration, before the re-send', links: [{ label: 'Original registration transaction', href: tx('3NhUNWfPjhYLfATTHorBjGWjz28NUDXniXrCpLyNUG5p') }] }],
+    note: 'The re-send result is recorded API evidence, not another transaction. This probe covers storage-deposit; the same behavior on call and transfer is still unproven.',
+    evidence: [{ label: 'Recorded evidence', href: `${REPO}#mainnet-evidence` }, { label: 'Operations code', href: source('src/core/ops.ts') }, { label: 'Operations tests', href: source('test/ops.test.ts') }],
   },
 ];
 

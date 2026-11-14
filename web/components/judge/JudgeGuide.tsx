@@ -1,7 +1,7 @@
 import React from 'react';
 import { Icon } from '@/design-system';
 import { RESOURCES } from '@/lib/design-resources';
-import { AGENT_PAGES, ATTACK_CHECKS, ATTACK_LOG, COMMANDS, DOCS, FEATURES, HIRE_STEPS, LIMITS, REPO, TRACKS, TUTORIAL_VIDEOS, VIDEOS, source, type Evidence, type Video } from '@/lib/judge-data';
+import { AGENT_PAGES, ATTACK_CHECKS, ATTACK_LOG, COMMANDS, DOCS, EXECUTION_EVIDENCE, FEATURES, HIRE_STEPS, LIMITS, REPO, TRACKS, TUTORIAL_VIDEOS, VIDEOS, source, type Evidence, type Video } from '@/lib/judge-data';
 import { SigmaHero } from './SigmaHero';
 import './judge.css';
 
@@ -149,11 +149,20 @@ export function JudgeGuide() {
         <EvidenceLinks items={[{ label: 'Hire state machine', href: source('src/core/hire.ts') }, { label: 'Owner and funding tests', href: source('test/hire.test.ts') }, { label: 'Documentation', href: DOCS }]} />
       </Section>
 
-      <Section id="features" eyebrow="Features and evidence" title="What is built, and what is proven." sub="Mainnet evidence belongs to the NEAR implementation. A simulated result is never counted as a real transaction. Transaction links will be added to the cards below.">
+      <Section id="features" eyebrow="Features and evidence" title="What is built, and what is proven." sub="Open the NEAR mainnet receipts for each recorded action. Strategy snapshots come from the README; earlier verification runs and third-party examples are labelled separately.">
+        <EvidenceLinks items={[{ label: 'Full evidence ledger in README', href: `${REPO}#mainnet-evidence` }]} />
         <div className="fl-jg-grid fl-jg-grid--two">{FEATURES.map(feature => <article className="fl-jg-card" key={feature.title}>
-          <span className={`fl-jg-badge${feature.proven ? ' fl-jg-badge--proven' : ''}`}>{feature.status}</span><h3 className="fl-jg-h3">{feature.title}</h3><p className="fl-jg-p">{feature.description}</p><p className="fl-jg-note">{feature.note}</p>
+          <span className={`fl-jg-badge${feature.proven ? ' fl-jg-badge--proven' : ''}`}>{feature.status}</span><h3 className="fl-jg-h3">{feature.title}</h3><p className="fl-jg-p">{feature.description}</p>
+          <div className="fl-jg-heading"><span className="fl-jg-eyebrow">Recorded on mainnet</span><ul className="fl-jg-list">{feature.recorded.map(item => <li key={item}>{item}</li>)}</ul></div>
+          {feature.proofs.map(group => <div className="fl-jg-proofgroup" key={group.title}><span className="fl-jg-cmdtitle">{group.title}</span><EvidenceLinks items={group.links} /></div>)}
+          <p className="fl-jg-note">{feature.note}</p>
           <EvidenceLinks items={[{ label: 'Open demo settings', href: feature.route }, ...feature.evidence]} />
-          {feature.transactions.length ? <EvidenceLinks items={feature.transactions} /> : <span className="fl-jg-pending">Transaction link pending</span>}
+        </article>)}</div>
+        <div className="fl-jg-heading"><h3 className="fl-jg-h3">Shared execution and recovery</h3><p className="fl-jg-sub">Evidence for the wallet controls, receipt handling and recovery behind the strategies.</p></div>
+        <div className="fl-jg-grid">{EXECUTION_EVIDENCE.map(item => <article className="fl-jg-card" key={item.title}>
+          <h4 className="fl-jg-h3">{item.title}</h4><p className="fl-jg-p">{item.description}</p>
+          {item.proofs.map(group => <div className="fl-jg-proofgroup" key={group.title}><span className="fl-jg-cmdtitle">{group.title}</span><EvidenceLinks items={group.links} /></div>)}
+          <p className="fl-jg-note">{item.note}</p><EvidenceLinks items={item.evidence} />
         </article>)}</div>
         <article className="fl-jg-card"><span className="fl-jg-badge">Paper only</span><h3 className="fl-jg-h3">Degen: meme.cooking auctions</h3><p className="fl-jg-p">A separate paper agent watches live meme.cooking auctions, applies deterministic screens and asks NEAR AI whether to join. It never makes a real deposit or swap. A NEAR wallet sign-in is required to create one; its page is public and read-only.</p><EvidenceLinks items={[{ label: 'Open paper agent settings', href: '/deploy/trade/degen' }, { label: 'Decision code', href: source('src/core/meme-cycle.ts') }]} /></article>
       </Section>
