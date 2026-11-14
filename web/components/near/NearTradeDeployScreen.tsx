@@ -2,6 +2,7 @@ import React from 'react';
 import { Button, Checkbox, Icon, SegmentedToggle } from '@/design-system';
 import { useNearSession } from '@/lib/near-session';
 import { api } from '@/lib/near-wallet';
+import { HELP_LINKS } from '@/lib/help-links';
 import { depositYocto, exactNear } from '@/lib/near-format';
 import type { TradeOptions } from '@/lib/near-actions';
 import { Group } from './deploy-kit';
@@ -192,8 +193,8 @@ export function NearTradeDeployScreen({ go, model = 'degen' }: { go: (route: str
     <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
       <span className="fl-eyebrow">Execution model</span>
       <span className="fl-deploy-form-links">
-        <a href="#" onClick={e => e.preventDefault()}>Guides</a>
-        <a href="#" onClick={e => e.preventDefault()}>Tutorial Videos</a>
+        <a href={HELP_LINKS[model].guide} target="_blank" rel="noreferrer">Guides</a>
+        {HELP_LINKS[model].video ? <a href={HELP_LINKS[model].video} target="_blank" rel="noreferrer">Tutorial Videos</a> : null}
       </span>
     </div>
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 10, marginTop: 6 }}>

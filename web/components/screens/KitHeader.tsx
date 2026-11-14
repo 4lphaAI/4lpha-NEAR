@@ -6,6 +6,7 @@ import React from "react";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Button, Icon, Input } from "@/design-system";
 import { RESOURCES } from "@/lib/design-resources";
+import { HEADER_TUTORIAL } from "@/lib/help-links";
 
 function KitHeader({ route, go, search, onSearchChange }: {
   route: string;
@@ -35,7 +36,7 @@ function KitHeader({ route, go, search, onSearchChange }: {
           style={{ ...linkBase, color: "var(--text-disabled)", background: "transparent", cursor: "not-allowed" }}>List your agent</span>
         <a href="https://x.com/4lpha_agent" target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>X</a>
         <a href="https://docs.4lpha.tech/NEAR" target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Docs<Icon name="external" size={12} /></a>
-        <a href="#" onClick={(e) => e.preventDefault()} className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Tutorial<Icon name="external" size={12} /></a>
+        <a href={HEADER_TUTORIAL} target="_blank" rel="noreferrer" className="fl-navlink" style={{ ...linkBase, color: "var(--text-muted)" }}>Tutorial<Icon name="external" size={12} /></a>
       </nav>
       <div className="fl-header-search" style={{ flex: 1, maxWidth: 320 }}>
         <Input

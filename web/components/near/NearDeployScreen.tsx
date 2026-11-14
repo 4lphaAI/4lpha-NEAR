@@ -5,6 +5,7 @@ import { depositYocto, exactNear } from '@/lib/near-format';
 import { applyLpPrefill, type GridForm, type HireOptions } from '@/lib/near-actions';
 import { applyGridPreset, gridFormFrom } from '@/lib/grid-form';
 import { api } from '@/lib/near-wallet';
+import { HELP_LINKS } from '@/lib/help-links';
 import { DCL_POOL_KEY, tickOf } from '@/lib/near-map';
 import { LiquidityChart, type LiquidityGeometry } from '@/components/lp/LiquidityChart';
 import { Group, PriceRangeBox, parsePrice } from './deploy-kit';
@@ -235,8 +236,8 @@ export function NearDeployScreen({ kind: id, go }: { kind: 'grid' | 'lp'; go: (r
           <div style={{ display: "flex", alignItems: "baseline", justifyContent: presets.length ? "space-between" : "flex-end", gap: 16, flexWrap: "wrap" }}>
             {presets.length ? <span className="fl-eyebrow">Execution model</span> : null}
             <span className="fl-deploy-form-links">
-              <a href="#" onClick={(e) => e.preventDefault()}>Guides</a>
-              <a href="#" onClick={(e) => e.preventDefault()}>Tutorial Videos</a>
+              <a href={HELP_LINKS[id].guide} target="_blank" rel="noreferrer">Guides</a>
+              <a href={HELP_LINKS[id].video} target="_blank" rel="noreferrer">Tutorial Videos</a>
             </span>
           </div>
           {presets.length ? <div style={{ display: "grid", gridTemplateColumns: `repeat(${presets.length === 1 ? "auto-fill" : "auto-fit"}, minmax(200px, 1fr))`, gap: 10 }}>
