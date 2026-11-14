@@ -351,22 +351,28 @@ export function createHandler(d: { store: Store; rpc: NearRpc; env: WebEnv; now:
       if (!/^\/[A-Za-z0-9._/-]*$/.test(path) || path.includes('//') || path.includes('/./') || path.includes('/../') || path.endsWith('/.') || path.endsWith('/..')) throw new CoreError('not_found', 'Not found.');
       if ((path === '/api/meme' || path.startsWith('/api/meme/')) && !env.memePaper) throw new CoreError('not_found', 'Not found.');
       if ((path === '/api/demo' || path.startsWith('/api/demo/')) && !demoStore) throw new CoreError('not_found', 'Not found.');
-      if (!['POST', 'GET'].includes(req.method ?? '')) throw new CoreError('bad_request', 'Invalid method.');
-      if (path !== '/api' && !path.startsWith('/api/')) {
-        const asset = req.method === 'GET' ? assets[path] : undefined;
-        if (asset) { const content = await readFile(asset[1]); res.setHeader('Content-Type', asset[0]); res.end(content); return; }
+      const api = path === '/api' || path.startsWith('/api/');
+      // HEAD is answered for pages and static files only (link checkers and crawlers), never for the API.
+      const head = req.method === 'HEAD' && !api;
+      if (!head && !['POST', 'GET'].includes(req.method ?? '')) throw new CoreError('bad_request', 'Invalid method.');
+      if (!api) {
+        const read = head || req.method === 'GET';
+        const body = (content: Buffer) => { res.setHeader('Content-Length', content.length); res.end(head ? undefined : content); };
+        const asset = read ? assets[path] : undefined;
+        if (asset) { res.setHeader('Content-Type', asset[0]); body(await readFile(asset[1])); return; }
         const types: Record<string, string> = { '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.jpg': 'image/jpeg', '.svg': 'image/svg+xml', '.webp': 'image/webp', '.woff2': 'font/woff2' };
         const extension = extname(path);
         const judgePage = path === '/judge' || path === '/judge/';
         const judgeMarkdown = path === '/judge.md';
         const type = judgeMarkdown ? 'text/markdown; charset=utf-8' : extension ? types[extension] : judgePage || /^\/(?:[a-z0-9-]+(?:\/[A-Za-z0-9._-]+)*)?$/.test(path) ? 'text/html; charset=utf-8' : undefined;
-        if (req.method === 'GET' && type && uiRoot) {
-          const file = resolve(uiRoot, extension ? path.slice(1) : 'index.html');
+        if (read && type && uiRoot) {
+          // judge.html is index.html with the judge brief as static text, so a reader without JavaScript gets the content.
+          const file = resolve(uiRoot, extension ? path.slice(1) : judgePage ? 'judge.html' : 'index.html');
           try {
             if ((await lstat(file)).isFile() && (await realpath(file)).startsWith(uiRoot + sep)) {
               const content = await readFile(file); res.setHeader('Content-Type', type);
               if (judgePage || judgeMarkdown) res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-              res.end(content); return;
+              body(content); return;
             }
           } catch { /* Missing or unsafe UI asset. */ }
         }

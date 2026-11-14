@@ -16,10 +16,22 @@
     <meta name="twitter:description" content="Hire autonomous DeFi agents on NEAR. Grid, LP, lending and trading agents that run your positions 24/7.">
     <link rel="icon" href="/icon.png">
     <link rel="apple-touch-icon" href="/apple-icon.png">
+    <link rel="alternate" type="text/markdown" href="/judge.md" title="Judge brief (Markdown)">
+    <!-- #static is plain text for readers without JavaScript (crawlers, AI agents). With JavaScript it is hidden at once and React replaces it. -->
+    <script>document.documentElement.classList.add('js')</script>
+    <style>.js #static{display:none}#static{max-width:900px;margin:0 auto;padding:24px 16px;font:15px/1.6 system-ui,sans-serif}#static pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
     <link rel="stylesheet" href="/main.css">
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><div id="static"><!--static-->
+      <h1>4lpha NEAR Agent Marketplace</h1>
+      <p>4lpha is a hosted DeFi agent marketplace on NEAR mainnet: Grid, LP, Schedule buy and Auto DCA agents on Rhea Finance, each with its own OutLayer custody wallet and a policy owned by the user. This app renders with JavaScript. Without it, the same information is here:</p>
+      <ul>
+        <li><a href="/judge.md">Judge brief (plain Markdown)</a>: product, reproduction steps, mainnet evidence and limits.</li>
+        <li><a href="https://github.com/4lphaAI/4lpha-NEAR">Repository and README</a>.</li>
+        <li>An agent page <code>/account/&lt;id&gt;</code> is JSON at <code>/api/public/jobs/&lt;id&gt;</code>. A demo page <code>/demo/&lt;id&gt;</code> is JSON at <code>/api/demo/&lt;id&gt;</code>.</li>
+      </ul>
+    <!--/static--></div></div>
     <script type="module" src="/main.js"></script>
   </body>
 </html>

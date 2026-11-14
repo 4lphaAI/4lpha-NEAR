@@ -246,12 +246,23 @@ test('UI dispatcher serves only confined ASCII static files and SPA routes, keep
   writeFileSync(join(dir, 'outside.js'), 'OUTSIDE FILE');
   mkdirSync(join(dir, 'outside')); writeFileSync(join(dir, 'outside', 'file.js'), 'OUTSIDE DIRECTORY');
   const { request, cookie } = handler(t, true, ui);
+  // /judge serves judge.html (the brief as static text for readers without JavaScript), every other page index.html.
+  writeFileSync(join(ui, 'judge.html'), '<html>Judge static</html>');
   for (const route of ['/', '/account/x', '/account', '/judge', '/judge/', '/judge?review=1']) {
     const r = await request(route);
-    assert.equal(r.status, 200); assert.equal(r.text, '<html>UI index</html>');
+    assert.equal(r.status, 200); assert.equal(r.text, route.startsWith('/judge') ? '<html>Judge static</html>' : '<html>UI index</html>');
     assert.equal(r.headers.get('Content-Type'), 'text/html; charset=utf-8');
     assert.equal(r.headers.get('X-Robots-Tag'), route.startsWith('/judge') ? 'noindex, nofollow' : undefined);
   }
+  // HEAD (link checkers, crawlers): same status and headers as GET with no body, on pages and files only.
+  for (const [route, type, length] of [['/judge', 'text/html; charset=utf-8', 25], ['/account/x', 'text/html; charset=utf-8', 21], ['/judge.md', 'text/markdown; charset=utf-8', Buffer.byteLength(judgeMarkdown)], ['/main.js', 'text/javascript; charset=utf-8', 9]] as const) {
+    const r = await request(route, 'HEAD');
+    assert.equal(r.status, 200, route); assert.equal(r.text, 'undefined', route);
+    assert.equal(r.headers.get('Content-Type'), type); assert.equal(r.headers.get('Content-Length'), length);
+  }
+  assert.equal((await request('/unlisted.md', 'HEAD')).status, 404);
+  for (const route of ['/api/me', '/api/public/jobs/x', '/api/jobs']) assert.equal((await request(route, 'HEAD')).status, 400, route);
+  for (const method of ['PUT', 'DELETE', 'OPTIONS']) assert.equal((await request('/judge', method)).status, 400, method);
   for (const route of ['/main.js', '/main.js?x=..']) {
     const r = await request(route); assert.equal(r.text, 'UI script'); assert.equal(r.headers.get('Content-Type'), 'text/javascript; charset=utf-8');
   }
@@ -286,8 +297,9 @@ test('UI dispatcher serves only confined ASCII static files and SPA routes, keep
     catch (e) { if (process.platform === 'win32' && (e as NodeJS.ErrnoException).code === 'EPERM') { t.skip('Windows denies unprivileged file symlink creation.'); return; } throw e; }
     assert.equal((await request('/account/x')).status, 404);
   });
-  assert.equal((await request('/', 'HEAD')).status, 400);
+  assert.equal((await request('/', 'PUT')).status, 400);
   assert.match((await request('/legacy')).text, /id="hire-form"/);
+  assert.equal((await request('/legacy', 'HEAD')).text, 'undefined');
 });
 
 test('GET jobs includes operation creation and finish times', async t => {

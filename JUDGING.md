@@ -19,6 +19,8 @@ Start with the [main demo](https://youtu.be/LiskEYE7MjE). Strategy tutorials: [G
 
 These operator-supplied pages are public and read-only; inspecting them needs no wallet connection. Status can change, so read the current page rather than assuming an agent is still running. A page or tutorial is not proof that every lifecycle path has been tested.
 
+**Machine readers:** the agent and demo pages render with JavaScript. The same public data is JSON, with no sign-in: `https://near.4lpha.tech/api/public/jobs/<id>` for an agent page (`/account/<id>`) and `https://near.4lpha.tech/api/demo/<id>` for a demo page (`/demo/<id>`). An agent answer carries the status, balances and every recorded operation with its transaction hash; a demo answer carries the simulated state. Example: [Grid Agent as JSON](https://near.4lpha.tech/api/public/jobs/ae5fa959-8148-485f-be55-29ea0c6ed157). The [visual guide](https://near.4lpha.tech/judge) also serves this whole brief as static text for readers without JavaScript.
+
 ## Product and NEAR scope
 
 4lpha is a hosted DeFi agent marketplace on NEAR. A user deposits NEAR, sets limits and delegates a Grid, liquidity position or buying plan on Rhea Finance. Each live agent uses a separate OutLayer custody wallet. The user's NEAR account owns its policy on `outlayer.near`; the user retains control of policy updates and freeze.
